@@ -50,6 +50,7 @@
     }
     .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
     .btn.danger{background:var(--dangerBg);border-color:var(--dangerBd);color:#991b1b}
+    .btn.small{padding:8px 10px;border-radius:10px;font-size:12px;font-weight:900}
 
     .wrap{max-width:1180px;margin:0 auto;padding:16px}
 
@@ -128,7 +129,7 @@
       display:none; align-items:center; justify-content:center; padding:16px; z-index:20;
     }
     .modal{
-      width:min(860px, 100%);
+      width:min(980px, 100%);
       background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.25);
       border:1px solid var(--border);
       padding:14px;
@@ -143,27 +144,12 @@
       cursor:pointer;
       font-weight:900;
     }
-    .form{display:grid; gap:10px; margin-top:10px}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
-    .field label{display:block; font-size:12px; color:var(--muted); font-weight:900; margin:0 0 6px}
-    .field input, .field textarea, .field select{
-      width:100%;
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:14px;
-      background:#fff;
-      color:var(--text);
-      outline:none;
-    }
-    textarea{min-height:90px; resize:vertical}
-    .actions{
-      display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;
+
+    .topRow{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
       margin-top:10px;
     }
     .savePill{
-      margin-right:auto;
       font-size:12px;
       font-weight:900;
       padding:6px 10px;
@@ -173,14 +159,66 @@
       color:var(--muted);
     }
     .savePill.ok{color:var(--okText); border-color:var(--okBd); background:var(--okBg)}
+
+    .rowsWrap{
+      margin-top:10px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:auto;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width:980px;
+      background:#fff;
+    }
+    thead th{
+      position:sticky; top:0;
+      background:#0b1220;
+      color:#fff;
+      font-size:12px;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      padding:10px 10px;
+      border-right:1px solid rgba(255,255,255,.08);
+      white-space:nowrap;
+      z-index:2;
+    }
+    tbody td{
+      border-top:1px solid var(--border);
+      border-right:1px solid var(--border);
+      padding:8px;
+      vertical-align:top;
+      background:#fff;
+    }
+    tbody tr:nth-child(even) td{background:#fcfcfd}
+
+    .cell, .cellSelect, .cellArea{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:13px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+    }
+    .cellArea{min-height:40px;resize:vertical}
+    .delCell{white-space:nowrap}
     .small{font-size:12px; color:var(--muted); margin-top:8px}
+
+    .actions{
+      display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;
+      margin-top:12px;
+    }
 
     @media (max-width:820px){
       .days{grid-template-columns:repeat(2,1fr)}
       .dow{display:none}
+      table{min-width:900px}
     }
     @media (max-width:640px){
-      .grid2,.grid3{grid-template-columns:1fr}
       input{min-width:180px}
     }
   </style>
@@ -190,7 +228,7 @@
   <div class="headerInner">
     <div>
       <h1>Torre KBR • Guests Information</h1>
-      <p class="sub">2026 • Click a date to view/edit guest details • Auto-saves on this device</p>
+      <p class="sub">2026 • Click a date → add multiple entries • 1 entry per unit (no duplicates) • Auto-saves</p>
     </div>
     <a class="btn primary" href="index.html">⬅ Main Menu</a>
   </div>
@@ -228,7 +266,7 @@
     <div class="days" id="daysGrid"></div>
   </div>
 
-  <div class="footerNote">Tip: Use <b>Export</b> to back up / transfer data to another device.</div>
+  <div class="footerNote">Tip: Export = backup / transfer. (Data is saved locally in your browser.)</div>
 </div>
 
 <!-- Modal -->
@@ -239,99 +277,59 @@
       <button class="xBtn" id="closeModalBtn">✕</button>
     </div>
 
-    <div class="form">
-      <div class="field">
-        <label for="guestName">Name of Guest/s</label>
-        <input id="guestName" placeholder="e.g., Juan Dela Cruz" />
+    <div class="topRow">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn small primary" id="addRowBtn">＋ Add Entry</button>
+        <button class="btn small" id="sortUnitBtn">⇅ Sort by Unit</button>
       </div>
-
-      <div class="grid3">
-        <div class="field">
-          <label for="pax">No. of Pax</label>
-          <input id="pax" inputmode="numeric" placeholder="e.g., 4" />
-        </div>
-        <div class="field">
-          <label for="checkin">Check-in</label>
-          <input id="checkin" placeholder="e.g., 2:00 PM" />
-        </div>
-        <div class="field">
-          <label for="checkout">Check-out</label>
-          <input id="checkout" placeholder="e.g., 12:00 NN" />
-        </div>
-      </div>
-
-      <div class="grid2">
-        <div class="field">
-          <label for="unit">Unit</label>
-          <select id="unit">
-            <option value="">— Select —</option>
-            <option>D1</option><option>D2</option><option>C1</option><option>C2</option><option>C3</option>
-            <option>B1</option><option>B2</option><option>A1</option><option>A2</option>
-            <option>ROOM A</option><option>ROOM B</option><option>ROOM C</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="mop">M.O.P</label>
-          <input id="mop" placeholder="Cash / GCash / Bank Transfer" />
-        </div>
-      </div>
-
-      <div class="grid3">
-        <div class="field">
-          <label for="down">Downpayment</label>
-          <input id="down" placeholder="₱" />
-        </div>
-        <div class="field">
-          <label for="bal">Balance</label>
-          <input id="bal" placeholder="₱" />
-        </div>
-        <div class="field">
-          <label for="total">Total</label>
-          <input id="total" placeholder="₱" />
-        </div>
-      </div>
-
-      <div class="grid2">
-        <div class="field">
-          <label for="contact">Contact No.</label>
-          <input id="contact" placeholder="09xx..." />
-        </div>
-        <div class="field">
-          <label for="remarks">Remarks</label>
-          <textarea id="remarks" placeholder="Notes, platform, special requests, etc."></textarea>
-        </div>
-      </div>
-
-      <div class="actions">
-        <div class="savePill" id="savePill">Saved</div>
-        <button class="btn danger" id="clearDateBtn">Clear this date</button>
-        <button class="btn" id="cancelBtn">Close</button>
-        <button class="btn primary" id="saveBtn">Save</button>
-      </div>
-
-      <div class="small">Saved locally in this browser (no login needed).</div>
+      <div class="savePill" id="savePill">Saved</div>
     </div>
+
+    <div class="rowsWrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:140px">Unit</th>
+            <th style="min-width:220px">Name of Guest/s</th>
+            <th style="min-width:110px">No. of Pax</th>
+            <th style="min-width:120px">Check-in</th>
+            <th style="min-width:120px">Check-out</th>
+            <th style="min-width:140px">Downpayment</th>
+            <th style="min-width:120px">Balance</th>
+            <th style="min-width:120px">Total</th>
+            <th style="min-width:140px">M.O.P</th>
+            <th style="min-width:160px">Contact No.</th>
+            <th style="min-width:220px">Remarks</th>
+            <th style="min-width:110px">Action</th>
+          </tr>
+        </thead>
+        <tbody id="rowsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="actions">
+      <button class="btn danger" id="clearDateBtn">Clear this date</button>
+      <button class="btn" id="cancelBtn">Close</button>
+      <button class="btn primary" id="saveBtn">Save</button>
+    </div>
+
+    <div class="small">Rule: Only 1 entry per unit per date. Used units are disabled automatically.</div>
   </div>
 </div>
 
 <script>
   // ===== Config =====
   const YEAR = 2026;
-  const STORAGE_KEY = `torre-kbr-guests-${YEAR}`;
+  const STORAGE_KEY = `torre-kbr-guests-multi-${YEAR}`;
 
+  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
   const MONTHS = [
     "January","February","March","April","May","June",
     "July","August","September","October","November","December"
   ];
 
   // Data shape:
-  // {
-  //  "2026-02-01": {
-  //    guestName:"", pax:"", checkin:"", checkout:"",
-  //    unit:"", down:"", bal:"", total:"",
-  //    mop:"", contact:"", remarks:""
-  //  }
-  // }
+  // { "YYYY-MM-DD": [ {unit,...}, {unit,...} ] }
   let data = loadData();
 
   // ===== Elements =====
@@ -344,7 +342,6 @@
   const importBtn   = document.getElementById("importBtn");
   const clearMonthBtn = document.getElementById("clearMonthBtn");
 
-  // modal
   const modalOverlay = document.getElementById("modalOverlay");
   const modalTitle   = document.getElementById("modalTitle");
   const closeModalBtn = document.getElementById("closeModalBtn");
@@ -352,20 +349,9 @@
   const saveBtn      = document.getElementById("saveBtn");
   const clearDateBtn = document.getElementById("clearDateBtn");
   const savePill     = document.getElementById("savePill");
-
-  const guestName = document.getElementById("guestName");
-  const pax = document.getElementById("pax");
-  const checkin = document.getElementById("checkin");
-  const checkout = document.getElementById("checkout");
-  const unit = document.getElementById("unit");
-  const down = document.getElementById("down");
-  const bal = document.getElementById("bal");
-  const total = document.getElementById("total");
-  const mop = document.getElementById("mop");
-  const contact = document.getElementById("contact");
-  const remarks = document.getElementById("remarks");
-
-  const fields = [guestName,pax,checkin,checkout,unit,down,bal,total,mop,contact,remarks];
+  const rowsBody     = document.getElementById("rowsBody");
+  const addRowBtn    = document.getElementById("addRowBtn");
+  const sortUnitBtn  = document.getElementById("sortUnitBtn");
 
   // ===== Month selector =====
   MONTHS.forEach((m, idx) => {
@@ -398,11 +384,10 @@
     const q = searchInput.value.trim().toLowerCase();
     monthMeta.textContent = q
       ? `Filtered by: "${searchInput.value.trim()}"`
-      : `Click a date to edit details (${daysInMonth} days)`;
+      : `Click a date to add/view entries (${daysInMonth} days)`;
 
     daysGrid.innerHTML = "";
 
-    // leading blanks
     for (let i=0; i<firstDow; i++){
       const blank = document.createElement("div");
       blank.className = "day muted";
@@ -412,22 +397,25 @@
 
     for (let d=1; d<=daysInMonth; d++){
       const dateStr = toISODate(YEAR, currentMonth+1, d);
-      const entry = data[dateStr];
+      const list = normalizeList(data[dateStr]);
 
-      // search filter: if query exists, hide non-matching dates
       if (q){
-        const hay = entry ? [
-          entry.guestName, entry.unit, entry.contact, entry.remarks, entry.mop
-        ].join(" ").toLowerCase() : "";
-        // also allow searching by day number/month short
+        const hay = list.map(x => [
+          x.unit, x.guestName, x.contact, x.remarks, x.mop
+        ].join(" ")).join(" ").toLowerCase();
         const extra = `${MONTHS[currentMonth].slice(0,3)} ${d} ${dateStr}`.toLowerCase();
         if (!hay.includes(q) && !extra.includes(q)) continue;
       }
 
-      const hasAny = entry && Object.values(entry).some(v => String(v||"").trim() !== "");
-      const quickLine = entry?.guestName?.trim()
-        ? entry.guestName.trim()
-        : (hasAny ? "Details saved" : "No details yet");
+      const filled = list.filter(hasAnyField);
+      const count = filled.length;
+
+      let preview = "No entries yet";
+      if (count === 1){
+        preview = filled[0].guestName?.trim() ? filled[0].guestName.trim() : "1 entry saved";
+      } else if (count > 1){
+        preview = `${count} entries saved`;
+      }
 
       const el = document.createElement("div");
       el.className = "day";
@@ -440,10 +428,10 @@
 
       el.innerHTML = `
         <div class="date">${MONTHS[currentMonth].slice(0,3)} ${d}</div>
-        <div class="meta">${escapeHtml(quickLine)}</div>
+        <div class="meta">${escapeHtml(preview)}</div>
         <div class="pillRow">
-          <span class="pill ${hasAny ? "ok" : "none"}">${hasAny ? "Saved" : "Empty"}</span>
-          ${entry?.unit ? `<span class="pill ok">${escapeHtml(entry.unit)}</span>` : ``}
+          <span class="pill ${count ? "ok" : "none"}">${count ? `${count} Saved` : "Empty"}</span>
+          ${count ? `<span class="pill ok">${escapeHtml(uniqueUnitsLabel(filled))}</span>` : ``}
         </div>
         <div class="hint">Click to edit</div>
       `;
@@ -452,51 +440,58 @@
     }
   }
 
+  function uniqueUnitsLabel(list){
+    const u = [...new Set(list.map(x => (x.unit||"").trim()).filter(Boolean))];
+    if (!u.length) return "—";
+    if (u.length <= 2) return u.join(", ");
+    return `${u[0]}, ${u[1]} +${u.length-2}`;
+  }
+
+  function defaultEntry(){
+    return {
+      unit:"",
+      guestName:"",
+      pax:"",
+      checkin:"",
+      checkout:"",
+      down:"",
+      bal:"",
+      total:"",
+      mop:"",
+      contact:"",
+      remarks:""
+    };
+  }
+
+  function normalizeList(v){
+    if (!Array.isArray(v)) return [];
+    return v.map(x => ({...defaultEntry(), ...(x||{})}));
+  }
+
+  function hasAnyField(x){
+    const obj = x || {};
+    return Object.keys(defaultEntry()).some(k => String(obj[k] ?? "").trim() !== "");
+  }
+
   // ===== Modal logic =====
   let activeDate = null;
   let saveTimer = null;
 
-  function defaultEntry(){
-    return {
-      guestName:"", pax:"", checkin:"", checkout:"",
-      unit:"", down:"", bal:"", total:"",
-      mop:"", contact:"", remarks:""
-    };
-  }
-
   function openModal(dateStr){
     activeDate = dateStr;
-    const entry = data[dateStr] ? { ...defaultEntry(), ...data[dateStr] } : defaultEntry();
-
     modalTitle.textContent = `Guest Details • ${dateStr}`;
-
-    guestName.value = entry.guestName || "";
-    pax.value = entry.pax || "";
-    checkin.value = entry.checkin || "";
-    checkout.value = entry.checkout || "";
-    unit.value = entry.unit || "";
-    down.value = entry.down || "";
-    bal.value = entry.bal || "";
-    total.value = entry.total || "";
-    mop.value = entry.mop || "";
-    contact.value = entry.contact || "";
-    remarks.value = entry.remarks || "";
-
     showSaved();
-    modalOverlay.style.display = "flex";
-    guestName.focus();
 
-    // Auto-save on typing
-    fields.forEach(f => {
-      f.oninput = () => scheduleAutosave();
-      f.onchange = () => scheduleAutosave();
-    });
+    const list = normalizeList(data[dateStr]);
+    renderRows(list.length ? list : [defaultEntry()]);
+
+    modalOverlay.style.display = "flex";
   }
 
   function closeModal(){
     modalOverlay.style.display = "none";
     activeDate = null;
-    fields.forEach(f => { f.oninput = null; f.onchange = null; });
+    rowsBody.innerHTML = "";
   }
 
   closeModalBtn.addEventListener("click", closeModal);
@@ -505,20 +500,147 @@
     if (e.target === modalOverlay) closeModal();
   });
 
-  function collectForm(){
-    return {
-      guestName: guestName.value.trim(),
-      pax: pax.value.trim(),
-      checkin: checkin.value.trim(),
-      checkout: checkout.value.trim(),
-      unit: unit.value.trim(),
-      down: down.value.trim(),
-      bal: bal.value.trim(),
-      total: total.value.trim(),
-      mop: mop.value.trim(),
-      contact: contact.value.trim(),
-      remarks: remarks.value.trim()
-    };
+  addRowBtn.addEventListener("click", () => {
+    const list = readRows();
+    const nextUnit = findFirstFreeUnit(list);
+    list.push({ ...defaultEntry(), unit: nextUnit || "" });
+    renderRows(list);
+    scheduleAutosave();
+  });
+
+  sortUnitBtn.addEventListener("click", () => {
+    const list = readRows();
+    list.sort((a,b) => unitRank(a.unit) - unitRank(b.unit));
+    renderRows(list);
+    scheduleAutosave();
+  });
+
+  function unitRank(u){
+    const idx = UNITS.indexOf((u||"").trim());
+    return idx === -1 ? 999 : idx;
+  }
+
+  function findFirstFreeUnit(list){
+    const used = new Set(list.map(x => (x.unit||"").trim()).filter(Boolean));
+    return UNITS.find(u => !used.has(u)) || "";
+  }
+
+  function renderRows(list){
+    rowsBody.innerHTML = "";
+    list.forEach((row, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${unitSelectHtml(idx, row.unit)}</td>
+        <td><input class="cell" data-i="${idx}" data-k="guestName" value="${escapeAttr(row.guestName)}" placeholder="Guest name/s"></td>
+        <td><input class="cell" data-i="${idx}" data-k="pax" value="${escapeAttr(row.pax)}" placeholder="0"></td>
+        <td><input class="cell" data-i="${idx}" data-k="checkin" value="${escapeAttr(row.checkin)}" placeholder="e.g., 2:00 PM"></td>
+        <td><input class="cell" data-i="${idx}" data-k="checkout" value="${escapeAttr(row.checkout)}" placeholder="e.g., 12:00 NN"></td>
+        <td><input class="cell" data-i="${idx}" data-k="down" value="${escapeAttr(row.down)}" placeholder="₱"></td>
+        <td><input class="cell" data-i="${idx}" data-k="bal" value="${escapeAttr(row.bal)}" placeholder="₱"></td>
+        <td><input class="cell" data-i="${idx}" data-k="total" value="${escapeAttr(row.total)}" placeholder="₱"></td>
+        <td><input class="cell" data-i="${idx}" data-k="mop" value="${escapeAttr(row.mop)}" placeholder="Cash / GCash / Bank"></td>
+        <td><input class="cell" data-i="${idx}" data-k="contact" value="${escapeAttr(row.contact)}" placeholder="09xx..."></td>
+        <td><textarea class="cellArea" data-i="${idx}" data-k="remarks" placeholder="Remarks...">${escapeHtml(row.remarks)}</textarea></td>
+        <td class="delCell">
+          <button class="btn small danger" data-del="${idx}">Delete</button>
+        </td>
+      `;
+      rowsBody.appendChild(tr);
+    });
+
+    // input handlers
+    rowsBody.querySelectorAll("input[data-i], textarea[data-i]").forEach(el => {
+      el.addEventListener("input", scheduleAutosave);
+    });
+
+    // unit change handler with duplicate protection
+    rowsBody.querySelectorAll("select[data-i][data-k='unit']").forEach(sel => {
+      sel.addEventListener("change", (e) => {
+        const ok = enforceUniqueUnits(e.target);
+        refreshUnitOptionDisables();
+        if (ok) scheduleAutosave();
+      });
+    });
+
+    // delete handlers
+    rowsBody.querySelectorAll("button[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const i = Number(btn.getAttribute("data-del"));
+        const list = readRows();
+        list.splice(i, 1);
+        if (!list.length) list.push(defaultEntry());
+        renderRows(list);
+        scheduleAutosave();
+      });
+    });
+
+    // disable used unit options across rows
+    refreshUnitOptionDisables();
+  }
+
+  function unitSelectHtml(i, value){
+    const opts = ['<option value="">— Select —</option>']
+      .concat(UNITS.map(u => `<option value="${escapeAttr(u)}"${u===value?' selected':''}>${escapeHtml(u)}</option>`))
+      .join("");
+    return `<select class="cellSelect" data-i="${i}" data-k="unit" data-prev="${escapeAttr(value||"")}">${opts}</select>`;
+  }
+
+  function enforceUniqueUnits(changedSelect){
+    const newVal = (changedSelect.value || "").trim();
+    const prevVal = (changedSelect.getAttribute("data-prev") || "").trim();
+
+    // allow clearing
+    if (!newVal){
+      changedSelect.setAttribute("data-prev", "");
+      return true;
+    }
+
+    // check duplicate in other selects
+    const selects = [...rowsBody.querySelectorAll("select[data-k='unit']")];
+    const duplicate = selects.some(s => s !== changedSelect && (s.value||"").trim() === newVal);
+
+    if (duplicate){
+      alert(`"${newVal}" is already used for this date. Only 1 entry per unit is allowed.`);
+      // revert
+      changedSelect.value = prevVal || "";
+      return false;
+    }
+
+    // accept
+    changedSelect.setAttribute("data-prev", newVal);
+    return true;
+  }
+
+  function refreshUnitOptionDisables(){
+    const selects = [...rowsBody.querySelectorAll("select[data-k='unit']")];
+    const used = selects.map(s => (s.value||"").trim()).filter(Boolean);
+
+    selects.forEach(sel => {
+      const current = (sel.value||"").trim();
+      [...sel.options].forEach(opt => {
+        const v = (opt.value||"").trim();
+        if (!v) { opt.disabled = false; return; } // allow "— Select —"
+        // disable if used elsewhere, but keep current enabled
+        opt.disabled = (v !== current) && used.includes(v);
+      });
+    });
+  }
+
+  function readRows(){
+    const list = [];
+    const trs = [...rowsBody.querySelectorAll("tr")];
+    trs.forEach((tr, idx) => {
+      const row = defaultEntry();
+      tr.querySelectorAll("[data-i]").forEach(el => {
+        const i = Number(el.getAttribute("data-i"));
+        if (i !== idx) return;
+        const k = el.getAttribute("data-k");
+        if (!k) return;
+        row[k] = (el.tagName === "TEXTAREA") ? el.value : el.value;
+      });
+      list.push(row);
+    });
+    return list;
   }
 
   function scheduleAutosave(){
@@ -526,18 +648,46 @@
     showSaving();
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const entry = collectForm();
-      data[activeDate] = entry;
+      // store only rows with something
+      const list = readRows().filter(hasAnyField);
+
+      // final safety: remove duplicates by unit (keep first)
+      const seen = new Set();
+      const deduped = [];
+      for (const r of list){
+        const u = (r.unit||"").trim();
+        if (u && seen.has(u)) continue;
+        if (u) seen.add(u);
+        deduped.push(r);
+      }
+
+      if (deduped.length) data[activeDate] = deduped;
+      else delete data[activeDate];
+
       persist();
       showSaved();
-      render(); // update month tiles
+      render();
     }, 250);
   }
 
   saveBtn.addEventListener("click", () => {
     if (!activeDate) return;
-    const entry = collectForm();
-    data[activeDate] = entry;
+
+    const list = readRows().filter(hasAnyField);
+
+    // final safety: remove duplicates by unit (keep first)
+    const seen = new Set();
+    const deduped = [];
+    for (const r of list){
+      const u = (r.unit||"").trim();
+      if (u && seen.has(u)) continue;
+      if (u) seen.add(u);
+      deduped.push(r);
+    }
+
+    if (deduped.length) data[activeDate] = deduped;
+    else delete data[activeDate];
+
     persist();
     showSaved();
     render();
@@ -545,7 +695,7 @@
 
   clearDateBtn.addEventListener("click", () => {
     if (!activeDate) return;
-    if (!confirm(`Clear guest details for ${activeDate}?`)) return;
+    if (!confirm(`Clear ALL entries for ${activeDate}?`)) return;
     delete data[activeDate];
     persist();
     showSaved();
@@ -590,7 +740,7 @@
           alert("Invalid file format.");
           return;
         }
-        data = parsed.data;
+        data = parsed.data || {};
         persist();
         render();
         alert("Imported successfully!");
@@ -634,6 +784,14 @@
       .replaceAll("&","&amp;")
       .replaceAll("<","&lt;")
       .replaceAll(">","&gt;");
+  }
+  function escapeAttr(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
   // init
