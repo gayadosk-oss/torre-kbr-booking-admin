@@ -110,7 +110,6 @@
     .date{font-weight:900; font-size:13px}
     .meta{color:var(--muted); font-size:12px; line-height:1.2}
 
-    .pillRow{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto}
     .pill{
       font-size:11px; font-weight:900;
       padding:5px 9px; border-radius:999px;
@@ -122,7 +121,6 @@
     .pill.none{color:#374151; background:#f3f4f6; border-color:#e5e7eb}
     .hint{font-size:11px; color:var(--muted)}
 
-    /* NEW: View/Edit button row on each day card */
     .actionsRow{
       display:flex;
       gap:8px;
@@ -181,6 +179,7 @@
       color:var(--muted);
     }
     .savePill.ok{color:var(--okText); border-color:var(--okBd); background:var(--okBg)}
+    .savePill.edit{color:var(--okText); border-color:var(--okBd); background:var(--okBg)}
 
     .formWrap{
       margin-top:10px;
@@ -188,7 +187,6 @@
       padding-top:12px;
     }
 
-    /* NEW: Split layout (entries list + form) */
     .modalBodySplit{
       display:grid;
       grid-template-columns: 1fr 1.4fr;
@@ -244,11 +242,6 @@
       gap:8px;
       flex-shrink:0;
     }
-    .dangerMini{
-      background:var(--dangerBg);
-      border-color:var(--dangerBd);
-      color:#991b1b;
-    }
 
     .formGrid{
       display:grid;
@@ -268,6 +261,11 @@
       background:#fff;
       color:var(--text);
       min-height:40px;
+    }
+    .field input:disabled, .field select:disabled, .field textarea:disabled{
+      background:#f9fafb;
+      color:#6b7280;
+      cursor:not-allowed;
     }
     textarea{min-height:86px; resize:vertical}
 
@@ -295,7 +293,7 @@
   <div class="headerInner">
     <div>
       <h1>Torre KBR • Guests Information</h1>
-      <p class="sub">2026 • Click a date → add multiple unit entries • 1 entry per unit per date • Auto-saves</p>
+      <p class="sub">2026 • Click a date → view saved entries • Edit or add new per unit • Auto-saves</p>
     </div>
     <a class="btn primary" href="index.html">⬅ Main Menu</a>
   </div>
@@ -316,7 +314,7 @@
     <div class="right">
       <button class="btn" id="exportBtn">Export</button>
       <button class="btn" id="importBtn">Import</button>
-      <button class="btn danger" id="clearMonthBtn">Clear month</button>
+      <!-- Clear Month removed (to prevent accidental deletes) -->
     </div>
   </div>
 
@@ -342,10 +340,13 @@
     <div class="modalHeader">
       <div>
         <strong id="modalTitle">Guest Details</strong>
-        <div class="small" id="modalSub">Add multiple entries (one per unit) for this date.</div>
+        <div class="small" id="modalSub">Choose an entry to view. Tap Edit to modify. + New entry to add.</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
-        <div class="savePill" id="savePill">Saved</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="savePill" id="modePill">View</div>
+          <div class="savePill ok" id="savePill">Saved</div>
+        </div>
         <button class="xBtn" id="closeModalBtn">✕</button>
       </div>
     </div>
@@ -356,7 +357,7 @@
         <div class="entryList">
           <div class="entryListHeader">
             <strong>Saved Entries</strong>
-            <button class="miniBtn primary" id="addNewBtn">+ New entry</button>
+            <button class="miniBtn primary" id="addNewBtn" type="button">+ New entry</button>
           </div>
           <div class="entryItems" id="entryItems"></div>
         </div>
@@ -416,13 +417,12 @@
           </div>
 
           <div class="modalActions">
-            <button class="btn danger" id="deleteBtn" style="display:none">Delete this entry</button>
-            <button class="btn danger" id="clearDateBtn">Clear this date</button>
-            <button class="btn" id="cancelBtn">Close</button>
-            <button class="btn primary" id="saveBtn">Save</button>
+            <button class="btn" id="toggleEditBtn" type="button">Edit</button>
+            <button class="btn" id="cancelBtn" type="button">Close</button>
+            <button class="btn primary" id="saveBtn" type="button">Save</button>
           </div>
 
-          <div class="small">Rule: One entry per unit per date (D1 can’t be duplicated). Units already used are disabled when adding new.</div>
+          <div class="small">Rule: One entry per unit per date. Units already used are disabled when adding new. (No Clear/Delete buttons to prevent accidental loss.)</div>
         </div>
       </div>
     </div>
@@ -452,7 +452,6 @@
   const searchInput = document.getElementById("searchInput");
   const exportBtn   = document.getElementById("exportBtn");
   const importBtn   = document.getElementById("importBtn");
-  const clearMonthBtn = document.getElementById("clearMonthBtn");
 
   const modalOverlay = document.getElementById("modalOverlay");
   const modalTitle   = document.getElementById("modalTitle");
@@ -460,9 +459,10 @@
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelBtn    = document.getElementById("cancelBtn");
   const saveBtn      = document.getElementById("saveBtn");
-  const deleteBtn    = document.getElementById("deleteBtn");
-  const clearDateBtn = document.getElementById("clearDateBtn");
   const savePill     = document.getElementById("savePill");
+
+  const modePill     = document.getElementById("modePill");
+  const toggleEditBtn = document.getElementById("toggleEditBtn");
 
   const entryItems   = document.getElementById("entryItems");
   const addNewBtn    = document.getElementById("addNewBtn");
@@ -522,6 +522,7 @@
       remarks:""
     };
   }
+
   function hasAnyField(obj){
     const o = obj || {};
     const keys = Object.keys(defaultEntry());
@@ -539,7 +540,7 @@
     const q = searchInput.value.trim().toLowerCase();
     monthMeta.textContent = q
       ? `Filtered by: "${searchInput.value.trim()}"`
-      : `Tap a date to add/view entries (${daysInMonth} days)`;
+      : `Tap a date to view/add entries (${daysInMonth} days)`;
 
     daysGrid.innerHTML = "";
 
@@ -577,8 +578,6 @@
 
       const el = document.createElement("div");
       el.className = "day";
-
-      // Make full card clickable + button (mobile-friendly)
       el.addEventListener("click", () => openGuestModal(dateStr));
 
       el.innerHTML = `
@@ -593,7 +592,6 @@
         <div class="hint">Tap View / Edit</div>
       `;
 
-      // prevent button click from double-triggering
       el.querySelector('[data-action="view"]')?.addEventListener("click", (e) => {
         e.stopPropagation();
         openGuestModal(dateStr);
@@ -603,10 +601,10 @@
     }
   }
 
-  // ===== Modal logic (multiple entries per date, 1 per unit) =====
+  // ===== Modal logic (View/Edit + autosave) =====
   let activeDate = null;
-  let activeEditUnit = null; // null = adding new
-
+  let activeEditUnit = null; // currently loaded unit (for edits)
+  let isEditMode = false;
   let saveTimer = null;
 
   function initUnitSelect(){
@@ -615,17 +613,50 @@
   }
   initUnitSelect();
 
+  function setEditMode(on){
+    isEditMode = !!on;
+
+    const controls = [unitSelectEl, guestNameEl, paxEl, checkinEl, checkoutEl, downEl, balEl, totalEl, mopEl, contactEl, remarksEl];
+    controls.forEach(el => el.disabled = !isEditMode);
+
+    modePill.textContent = isEditMode ? "Edit" : "View";
+    modePill.classList.toggle("edit", isEditMode);
+
+    toggleEditBtn.textContent = isEditMode ? "Done" : "Edit";
+
+    // In view mode, don’t show "Saving…" and keep pill as Saved
+    if (!isEditMode) showSaved();
+  }
+
+  toggleEditBtn.addEventListener("click", () => {
+    setEditMode(!isEditMode);
+    if (isEditMode) guestNameEl.focus();
+  });
+
   function openGuestModal(dateStr){
     activeDate = dateStr;
     activeEditUnit = null;
 
     modalTitle.textContent = `Guest Details • ${dateStr}`;
-    modalSub.textContent = `Add multiple entries (one per unit) for this date.`;
+    modalSub.textContent = `Choose an entry to view. Tap Edit to modify. + New entry to add.`;
     showSaved();
 
     modalOverlay.style.display = "flex";
     renderEntriesList();
-    startNewEntry(); // default
+
+    const entries = getEntriesForDate(dateStr);
+    const savedUnits = Object.keys(entries).filter(u => hasAnyField(entries[u])).sort((a,b)=>a.localeCompare(b));
+
+    if (savedUnits.length){
+      // Load first saved entry in VIEW mode
+      loadEntry(savedUnits[0]);
+      setEditMode(false);
+    } else {
+      // No entries yet: start new in EDIT mode
+      startNewEntry();
+      setEditMode(true);
+    }
+
     refreshUnitSelectOptions();
   }
 
@@ -633,13 +664,17 @@
     modalOverlay.style.display = "none";
     activeDate = null;
     activeEditUnit = null;
+    setEditMode(false);
   }
 
   closeModalBtn.addEventListener("click", closeModal);
   cancelBtn.addEventListener("click", closeModal);
   modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
 
-  addNewBtn.addEventListener("click", startNewEntry);
+  addNewBtn.addEventListener("click", () => {
+    startNewEntry();
+    setEditMode(true);
+  });
 
   function renderEntriesList(){
     const entries = getEntriesForDate(activeDate);
@@ -666,30 +701,23 @@
             <div class="entryMeta">${escapeHtml(meta)}</div>
           </div>
           <div class="entryRight">
-            <button class="miniBtn" type="button" data-edit="${escapeAttr(u)}">Edit</button>
-            <button class="miniBtn dangerMini" type="button" data-del="${escapeAttr(u)}">Delete</button>
+            <button class="miniBtn" type="button" data-view="${escapeAttr(u)}">View</button>
           </div>
         </div>
       `;
     }).join("");
 
-    entryItems.querySelectorAll("[data-edit]").forEach(btn=>{
+    entryItems.querySelectorAll("[data-view]").forEach(btn=>{
       btn.addEventListener("click", ()=>{
-        editEntry(btn.getAttribute("data-edit"));
-      });
-    });
-    entryItems.querySelectorAll("[data-del]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const u = btn.getAttribute("data-del");
-        if (!confirm(`Delete entry for ${u} on ${activeDate}?`)) return;
-        deleteEntry(u);
+        const u = btn.getAttribute("data-view");
+        loadEntry(u);
+        setEditMode(false);
+        refreshUnitSelectOptions();
       });
     });
   }
 
-  function startNewEntry(){
-    activeEditUnit = null;
-
+  function clearForm(){
     unitSelectEl.value = "";
     guestNameEl.value = "";
     paxEl.value = "";
@@ -701,13 +729,16 @@
     mopEl.value = "";
     contactEl.value = "";
     remarksEl.value = "";
+  }
 
-    deleteBtn.style.display = "none";
+  function startNewEntry(){
+    activeEditUnit = null;
+    clearForm();
     refreshUnitSelectOptions();
     guestNameEl.focus();
   }
 
-  function editEntry(unit){
+  function loadEntry(unit){
     const entries = getEntriesForDate(activeDate);
     const e = entries[unit];
     if (!e) return;
@@ -725,20 +756,21 @@
     mopEl.value = e.mop || "";
     contactEl.value = e.contact || "";
     remarksEl.value = e.remarks || "";
-
-    deleteBtn.style.display = "";
-    refreshUnitSelectOptions();
-    guestNameEl.focus();
   }
 
   function refreshUnitSelectOptions(){
+    if (!activeDate) return;
     const entries = getEntriesForDate(activeDate);
+
+    // Used units (saved)
     const used = new Set(Object.keys(entries).filter(u => hasAnyField(entries[u])));
+
+    // If editing an existing unit, allow it. Otherwise disable already-used units.
     const current = activeEditUnit;
 
     [...unitSelectEl.options].forEach(opt=>{
       const v = opt.value;
-      if (!v) return; // allow blank
+      if (!v) return;
       opt.disabled = used.has(v) && v !== current;
     });
   }
@@ -758,19 +790,21 @@
     };
   }
 
-  // Autosave while typing (when editing an existing entry)
+  // Autosave while typing (VIEW mode does not autosave)
   const formEls = [guestNameEl,paxEl,checkinEl,checkoutEl,downEl,balEl,totalEl,mopEl,contactEl,remarksEl,unitSelectEl];
   formEls.forEach(el => el.addEventListener("input", () => scheduleAutosave()));
   unitSelectEl.addEventListener("change", () => {
-    // if switching unit while editing, treat as "changing unit" (validated on save)
     scheduleAutosave();
     refreshUnitSelectOptions();
   });
 
   function scheduleAutosave(){
-    // Only autosave if editing an existing entry AND unit is valid.
     if (!activeDate) return;
-    if (!activeEditUnit) return; // for new entry, user presses Save
+    if (!isEditMode) return;
+
+    const unit = (unitSelectEl.value || "").trim();
+    if (!unit) return;
+
     showSaving();
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => doSave(true), 250);
@@ -793,20 +827,22 @@
 
     // Prevent duplicate unit when adding NEW
     if (!activeEditUnit && entries[unit] && hasAnyField(entries[unit])){
-      alert(`${unit} already has an entry for this date. Please edit it instead.`);
+      if (!isAuto) alert(`${unit} already has an entry for this date. Please view it and tap Edit.`);
+      showSaved();
       return;
     }
 
     // Prevent clash if changing unit during edit
     if (activeEditUnit && unit !== activeEditUnit && entries[unit] && hasAnyField(entries[unit])){
-      alert(`${unit} already has an entry for this date. Choose another unit.`);
+      if (!isAuto) alert(`${unit} already has an entry for this date. Choose another unit.`);
+      showSaved();
       return;
     }
 
     const payload = getFormData();
     const filled = hasAnyField(payload);
 
-    // If user changed unit key while editing, move it
+    // If unit key changed, move it
     if (activeEditUnit && unit !== activeEditUnit){
       delete entries[activeEditUnit];
       activeEditUnit = unit;
@@ -814,8 +850,12 @@
 
     if (filled){
       entries[unit] = payload;
+      // If it was a brand-new entry, lock it as active so autosave continues
+      if (!activeEditUnit) activeEditUnit = unit;
     } else {
+      // If all fields empty, remove it
       delete entries[unit];
+      if (activeEditUnit === unit) activeEditUnit = null;
     }
 
     // If date becomes empty, remove it
@@ -827,46 +867,7 @@
     render();
     renderEntriesList();
     refreshUnitSelectOptions();
-
-    // if this was a manual save on a NEW entry, convert to edit mode
-    if (!isAuto && !deleteBtn.style.display) {
-      // nothing
-    }
-    if (!isAuto && deleteBtn.style.display === "none"){
-      activeEditUnit = unit;
-      deleteBtn.style.display = "";
-    }
   }
-
-  deleteBtn.addEventListener("click", () => {
-    if (!activeDate || !activeEditUnit) return;
-    if (!confirm(`Delete ${activeEditUnit} entry for ${activeDate}?`)) return;
-    deleteEntry(activeEditUnit);
-  });
-
-  function deleteEntry(unit){
-    const entries = getEntriesForDate(activeDate);
-    delete entries[unit];
-
-    const stillHasAny = Object.keys(entries).some(u => entries[u] && hasAnyField(entries[u]));
-    if (!stillHasAny) delete data[activeDate];
-
-    persist();
-    showSaved();
-    render();
-    renderEntriesList();
-    startNewEntry();
-  }
-
-  clearDateBtn.addEventListener("click", () => {
-    if (!activeDate) return;
-    if (!confirm(`Clear ALL entries for ${activeDate}?`)) return;
-    delete data[activeDate];
-    persist();
-    showSaved();
-    render();
-    closeModal();
-  });
 
   function showSaving(){
     savePill.textContent = "Saving…";
@@ -877,7 +878,7 @@
     savePill.classList.add("ok");
   }
 
-  // ===== Export / Import / Clear Month =====
+  // ===== Export / Import =====
   exportBtn.addEventListener("click", () => {
     const payload = JSON.stringify({ year: YEAR, data }, null, 2);
     const blob = new Blob([payload], { type:"application/json" });
@@ -916,17 +917,6 @@
     input.click();
   });
 
-  clearMonthBtn.addEventListener("click", () => {
-    const m = currentMonth + 1;
-    const prefix = `${YEAR}-${String(m).padStart(2,"0")}-`;
-    const keys = Object.keys(data).filter(k => k.startsWith(prefix));
-    if (!keys.length) return alert("Nothing to clear for this month.");
-    if (!confirm(`Clear all guest entries for ${MONTHS[currentMonth]} ${YEAR}?`)) return;
-    keys.forEach(k => delete data[k]);
-    persist();
-    render();
-  });
-
   // ===== Storage =====
   function loadData(){
     try{
@@ -960,6 +950,7 @@
   }
 
   // init
+  setEditMode(false);
   render();
 </script>
 </body>
