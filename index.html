@@ -41,20 +41,58 @@ button{
 button:hover{
   background:#f3f4f6;
 }
+.main-container{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:20px;
+}
+
+.main-logo{
+  width:180px;       /* perfect balanced size */
+  max-width:70%;
+  height:auto;
+  margin-bottom:10px;
+}
+
+h1{
+  margin:0;
+  font-size:28px;
+  font-weight:700;
+}
+
+.menu-btn{
+  display:block;
+  width:260px;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #e5e7eb;
+  background:#f9fafb;
+  text-decoration:none;
+  color:#111827;
+  font-weight:600;
+  transition:0.2s;
+}
+
+.menu-btn:hover{
+  background:#111827;
+  color:#fff;
+}
 </style>
 </head>
 
 <body>
-<div class="container">
+<div class="main-container">
+
+  <img src="logo.png" alt="Torre KBR Logo" class="main-logo">
+
   <h1>Torre KBR Admin</h1>
 
-  <button onclick="location.href='booking.html'">
-    Booking Calendar
-  </button>
-
-  <button onclick="location.href='guests.html'">
-    Guests Information
-  </button>
+  <a href="calendar.html" class="menu-btn">Booking Calendar</a>
+  <a href="guests.html" class="menu-btn">Guests Information</a>
 
 </div>
 </body>
