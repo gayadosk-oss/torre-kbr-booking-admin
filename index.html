@@ -3,347 +3,101 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Torre KBR Booking Admin — Guests</title>
+  <title>Torre KBR Booking Admin (2026)</title>
   <style>
     :root{
-      --bg:#fff; --text:#111; --muted:#666; --line:#e8e8e8;
-      --btn:#111; --btnText:#fff;
+      --bg:#f6f7fb; --card:#fff; --text:#111827; --muted:#6b7280;
+      --border:#e5e7eb; --shadow:0 10px 28px rgba(17,24,39,.10);
+      --accent:#2563eb;
     }
-    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
-    body{margin:0;background:var(--bg);color:var(--text);}
-    header{
-      position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);
-      padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
     }
-    header h1{font-size:16px;margin:0;font-weight:700;}
-    nav a{color:var(--text);text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:10px;}
-    nav a:hover{background:#fafafa;}
-    .wrap{max-width:1200px;margin:0 auto;padding:16px;}
-    .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px;}
-    input, select, button{
-      border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);
-      font-size:14px;
+    .wrap{
+      width:min(720px, 100%);
+      text-align:center;
     }
-    button.primary{background:var(--btn);color:var(--btnText);border-color:var(--btn);}
-    table{width:100%;border-collapse:separate;border-spacing:0;}
-    th, td{border-bottom:1px solid var(--line);padding:10px;vertical-align:top;font-size:14px;}
-    th{position:sticky;top:56px;background:#fff;z-index:1;text-align:left;color:var(--muted);font-weight:700;}
-    td input, td select{width:100%;padding:8px 10px;border-radius:10px;}
-    .tiny{font-size:12px;color:var(--muted);}
-    .card{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;}
-    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
-    @media(max-width:900px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
-    @media(max-width:520px){ .grid{grid-template-columns:1fr;} }
+    h1{margin:0 0 8px; font-size:34px}
+    p{margin:0 0 18px; color:var(--muted)}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    a.btn{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+      text-decoration:none;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:18px 14px;
+      color:var(--text);
+      transition:transform .05s ease, box-shadow .15s ease;
+      min-height:110px;
+    }
+    a.btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 10px 24px rgba(17,24,39,.08);
+    }
+    .title{font-size:18px; font-weight:800}
+    .desc{font-size:13px; color:var(--muted); line-height:1.25}
+    .badge{
+      margin-top:10px;
+      display:inline-block;
+      font-size:12px;
+      color:var(--muted);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+    }
+    @media (max-width:640px){
+      .grid{grid-template-columns:1fr}
+      h1{font-size:28px}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Torre KBR Booking Admin</h1>
-    <nav>
-      <a href="./index.html">Calendar</a>
-      <a href="./guests.html">Guests</a>
-    </nav>
-  </header>
-
   <div class="wrap">
+    <h1>Torre KBR Booking Admin</h1>
+    <p>Choose what you want to open (2026)</p>
+
     <div class="card">
       <div class="grid">
-        <div>
-          <div class="tiny">Search (name/unit/date)</div>
-          <input id="q" placeholder="Type to search…" />
-        </div>
-        <div>
-          <div class="tiny">Status</div>
-          <select id="statusFilter">
-            <option value="ALL">ALL</option>
-            <option value="BOOKED">BOOKED</option>
-            <option value="HOLD">HOLD</option>
-          </select>
-        </div>
-        <div>
-          <div class="tiny">Quick add (optional)</div>
-          <button id="addRow" class="primary">Add guest row</button>
-        </div>
-        <div>
-          <div class="tiny">Export/Import (backup)</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button id="exportBtn">Export JSON</button>
-            <button id="importBtn">Import JSON</button>
-          </div>
-        </div>
-      </div>
-      <div class="tiny" style="margin-top:10px;">
-        Saves automatically to this browser. For shared multi-device saving, we can switch to Cloudflare KV/D1.
-      </div>
-    </div>
+        <a class="btn" href="./booking.html">
+          <div class="title">Booking Calendar</div>
+          <div class="desc">Edit availability + guest names per date & unit</div>
+        </a>
 
-    <div style="overflow:auto;border:1px solid var(--line);border-radius:14px;">
-      <table id="tbl">
-        <thead>
-          <tr>
-            <th style="min-width:130px;">Date</th>
-            <th style="min-width:100px;">Unit</th>
-            <th style="min-width:110px;">Status</th>
-            <th style="min-width:220px;">Guest name</th>
-            <th style="min-width:110px;">Pax</th>
-            <th style="min-width:130px;">Check-in</th>
-            <th style="min-width:130px;">Check-out</th>
-            <th style="min-width:150px;">Contact no.</th>
-            <th style="min-width:220px;">Remarks</th>
-            <th style="min-width:90px;">Delete</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+        <a class="btn" href="./guests.html">
+          <div class="title">Guests Information</div>
+          <div class="desc">Search and edit guest details (syncs with calendar)</div>
+        </a>
+      </div>
+
+      <div class="badge">Auto-saves on this device (browser storage)</div>
     </div>
   </div>
-
-<script>
-const STORAGE_KEY = "torreKBR_bookingDB_v1";
-
-const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C","ROOM D"];
-const STATUS = ["AVAILABLE","BOOKED","HOLD"];
-
-function loadDB(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return { bookings:{} };
-    return JSON.parse(raw);
-  }catch(e){ return { bookings:{} }; }
-}
-function saveDB(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
-
-function ensureDayUnit(db, iso, unit){
-  if(!db.bookings[iso]) db.bookings[iso] = {};
-  if(!db.bookings[iso][unit]){
-    db.bookings[iso][unit] = {
-      status:"BOOKED",
-      guest:"",
-      pax:"",
-      checkin:"",
-      checkout:"",
-      contact:"",
-      remarks:""
-    };
-  }else{
-    // add missing fields if older data
-    const o = db.bookings[iso][unit];
-    if(o.pax===undefined) o.pax="";
-    if(o.checkin===undefined) o.checkin="";
-    if(o.checkout===undefined) o.checkout="";
-    if(o.contact===undefined) o.contact="";
-    if(o.remarks===undefined) o.remarks="";
-  }
-  return db.bookings[iso][unit];
-}
-
-function allRows(db){
-  const rows = [];
-  for(const iso of Object.keys(db.bookings)){
-    const day = db.bookings[iso];
-    for(const unit of Object.keys(day)){
-      const rec = ensureDayUnit(db, iso, unit);
-      rows.push({ iso, unit, ...rec });
-    }
-  }
-  // sort by date then unit
-  rows.sort((a,b)=> a.iso.localeCompare(b.iso) || a.unit.localeCompare(b.unit));
-  return rows;
-}
-
-let db = loadDB();
-saveDB(db);
-
-const tbody = document.getElementById("tbody");
-const q = document.getElementById("q");
-const statusFilter = document.getElementById("statusFilter");
-
-function render(){
-  const rows = allRows(db);
-  const query = (q.value||"").trim().toLowerCase();
-  const sf = statusFilter.value;
-
-  const filtered = rows.filter(r=>{
-    // show only booked/hold by default
-    const defaultShow = (r.status==="BOOKED" || r.status==="HOLD");
-    const statusOk = (sf==="ALL" ? defaultShow : r.status===sf);
-    if(!statusOk) return false;
-
-    if(!query) return true;
-    const hay = `${r.iso} ${r.unit} ${r.status} ${r.guest} ${r.contact} ${r.remarks}`.toLowerCase();
-    return hay.includes(query);
-  });
-
-  tbody.innerHTML = "";
-  for(const r of filtered){
-    const tr = document.createElement("tr");
-
-    // Date
-    const tdDate = document.createElement("td");
-    const inDate = document.createElement("input");
-    inDate.type="date";
-    inDate.value = r.iso;
-    tdDate.appendChild(inDate);
-
-    // Unit
-    const tdUnit = document.createElement("td");
-    const selUnit = document.createElement("select");
-    UNITS.forEach(u=>{
-      const opt=document.createElement("option");
-      opt.value=u; opt.textContent=u;
-      selUnit.appendChild(opt);
-    });
-    selUnit.value = r.unit;
-    tdUnit.appendChild(selUnit);
-
-    // Status
-    const tdStatus = document.createElement("td");
-    const selStatus = document.createElement("select");
-    STATUS.forEach(s=>{
-      const opt=document.createElement("option");
-      opt.value=s; opt.textContent=s;
-      selStatus.appendChild(opt);
-    });
-    selStatus.value = r.status;
-    tdStatus.appendChild(selStatus);
-
-    // Guest
-    const tdGuest = document.createElement("td");
-    const inGuest = document.createElement("input");
-    inGuest.value = r.guest || "";
-    tdGuest.appendChild(inGuest);
-
-    // Pax
-    const tdPax = document.createElement("td");
-    const inPax = document.createElement("input");
-    inPax.value = r.pax || "";
-    inPax.placeholder="e.g. 2";
-    tdPax.appendChild(inPax);
-
-    // Check-in
-    const tdCin = document.createElement("td");
-    const inCin = document.createElement("input");
-    inCin.type="date";
-    inCin.value = r.checkin || "";
-    tdCin.appendChild(inCin);
-
-    // Check-out
-    const tdCout = document.createElement("td");
-    const inCout = document.createElement("input");
-    inCout.type="date";
-    inCout.value = r.checkout || "";
-    tdCout.appendChild(inCout);
-
-    // Contact
-    const tdContact = document.createElement("td");
-    const inContact = document.createElement("input");
-    inContact.value = r.contact || "";
-    tdContact.appendChild(inContact);
-
-    // Remarks
-    const tdRemarks = document.createElement("td");
-    const inRemarks = document.createElement("input");
-    inRemarks.value = r.remarks || "";
-    tdRemarks.appendChild(inRemarks);
-
-    // Delete
-    const tdDel = document.createElement("td");
-    const btnDel = document.createElement("button");
-    btnDel.textContent="Delete";
-    tdDel.appendChild(btnDel);
-
-    const writeBack = ()=>{
-      // remove old key
-      if(db.bookings[r.iso] && db.bookings[r.iso][r.unit]){
-        delete db.bookings[r.iso][r.unit];
-        if(Object.keys(db.bookings[r.iso]).length===0) delete db.bookings[r.iso];
-      }
-
-      const newIso = inDate.value || r.iso;
-      const newUnit = selUnit.value || r.unit;
-
-      const rec = ensureDayUnit(db, newIso, newUnit);
-      rec.status = selStatus.value;
-      rec.guest = inGuest.value;
-      rec.pax = inPax.value;
-      rec.checkin = inCin.value;
-      rec.checkout = inCout.value;
-      rec.contact = inContact.value;
-      rec.remarks = inRemarks.value;
-
-      saveDB(db);
-      // re-render to reflect moved date/unit
-      render();
-    };
-
-    [inDate, selUnit, selStatus, inGuest, inPax, inCin, inCout, inContact, inRemarks].forEach(el=>{
-      el.addEventListener("change", writeBack);
-      el.addEventListener("input", ()=>{ saveDB(db); }); // light save while typing
-      el.addEventListener("blur", writeBack);
-    });
-
-    btnDel.addEventListener("click", ()=>{
-      if(!confirm("Delete this guest row?")) return;
-      if(db.bookings[r.iso] && db.bookings[r.iso][r.unit]){
-        delete db.bookings[r.iso][r.unit];
-        if(Object.keys(db.bookings[r.iso]).length===0) delete db.bookings[r.iso];
-        saveDB(db);
-        render();
-      }
-    });
-
-    [tdDate,tdUnit,tdStatus,tdGuest,tdPax,tdCin,tdCout,tdContact,tdRemarks,tdDel].forEach(td=>tr.appendChild(td));
-    tbody.appendChild(tr);
-  }
-}
-
-q.addEventListener("input", render);
-statusFilter.addEventListener("change", render);
-
-document.getElementById("addRow").addEventListener("click", ()=>{
-  // add a default row (Jan 1, 2026, D1 booked)
-  const iso = "2026-01-01";
-  const unit = "D1";
-  const rec = ensureDayUnit(db, iso, unit);
-  rec.status = "BOOKED";
-  rec.guest = rec.guest || "";
-  saveDB(db);
-  render();
-});
-
-document.getElementById("exportBtn").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "torre-kbr-bookings-backup.json";
-  a.click();
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById("importBtn").addEventListener("click", ()=>{
-  const inp = document.createElement("input");
-  inp.type="file";
-  inp.accept="application/json";
-  inp.onchange = async ()=>{
-    const file = inp.files?.[0];
-    if(!file) return;
-    const text = await file.text();
-    try{
-      const data = JSON.parse(text);
-      if(!data || typeof data!=="object" || !data.bookings) throw new Error("Invalid file");
-      db = data;
-      saveDB(db);
-      render();
-      alert("Imported ✅");
-    }catch(e){
-      alert("Import failed. Please use the exported JSON format.");
-    }
-  };
-  inp.click();
-});
-
-render();
-</script>
 </body>
 </html>
