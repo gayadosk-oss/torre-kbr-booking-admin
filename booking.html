@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking Calendar 2026</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#ffffff;
+}
+
+header{
+  padding:20px;
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
+}
+
+table{
+  border-collapse:collapse;
+  width:100%;
+  font-size:14px;
+}
+
+th, td{
+  border:1px solid #e5e7eb;
+  padding:6px;
+  text-align:center;
+}
+
+th{
+  background:#1e3a8a;
+  color:white;
+  position:sticky;
+  top:0;
+}
+
+.dateCol{
+  font-weight:bold;
+  background:#f3f4f6;
+}
+
+select{
+  width:100%;
+  padding:4px;
+  border-radius:6px;
+  border:1px solid #e5e7eb;
+  font-weight:bold;
+}
+
+.available{background:#dcfce7;color:#166534;}
+.booked{background:#fee2e2;color:#991b1b;}
+.pending{background:#fef3c7;color:#92400e;}
+
+.backBtn{
+  margin:15px;
+  padding:10px 20px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  background:#fff;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>Booking Calendar – 2026</header>
+
+<button class="backBtn" onclick="location.href='index.html'">← Back</button>
+
+<div style="overflow:auto; padding:15px;">
+<table id="calendarTable">
+<thead>
+<tr>
+<th>DATE</th>
+<th>D1</th>
+<th>D2</th>
+<th>C1</th>
+<th>C2</th>
+<th>C3</th>
+<th>B1</th>
+<th>B2</th>
+<th>A1</th>
+<th>A2</th>
+<th>ROOM A</th>
+<th>ROOM B</th>
+<th>ROOM C</th>
+<th>ROOM D</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<script>
+const units = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C","ROOM D"];
+const tbody = document.querySelector("tbody");
+
+const STORAGE_KEY = "torreBooking2026";
+
+let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
+}
+
+function createDropdown(date, unit){
+  const key = date+"_"+unit;
+  const select = document.createElement("select");
+
+  ["AVAILABLE","BOOKED","PENDING"].forEach(status=>{
+    const opt = document.createElement("option");
+    opt.value=status;
+    opt.text=status;
+    select.appendChild(opt);
+  });
+
+  select.value = savedData[key] || "AVAILABLE";
+  updateColor(select);
+
+  select.onchange = ()=>{
+    savedData[key] = select.value;
+    saveData();
+    updateColor(select);
+  };
+
+  return select;
+}
+
+function updateColor(select){
+  select.classList.remove("available","booked","pending");
+  if(select.value==="AVAILABLE") select.classList.add("available");
+  if(select.value==="BOOKED") select.classList.add("booked");
+  if(select.value==="PENDING") select.classList.add("pending");
+}
+
+function generateCalendar(){
+  const start = new Date(2026,0,1);
+  const end = new Date(2026,11,31);
+
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    const row = document.createElement("tr");
+
+    const dateStr = d.toLocaleDateString("en-US",{month:"long", day:"numeric"});
+    const dateCell = document.createElement("td");
+    dateCell.textContent = dateStr;
+    dateCell.className="dateCol";
+    row.appendChild(dateCell);
+
+    units.forEach(unit=>{
+      const td = document.createElement("td");
+      td.appendChild(createDropdown(dateStr,unit));
+      row.appendChild(td);
+    });
+
+    tbody.appendChild(row);
+  }
+}
+
+generateCalendar();
+</script>
+
+</body>
+</html>
+
