@@ -74,7 +74,6 @@
     button{cursor:pointer}
     button.primary{background:var(--accent); color:#fff; border-color:transparent}
     button.ghost{background:#fff}
-    button.danger{background:#fff; border-color:#fca5a5; color:#b91c1c}
 
     .grid{
       margin-top:14px;
@@ -255,7 +254,7 @@
     <div class="right">
       <button class="ghost" id="exportBtn" type="button">Export</button>
       <button class="ghost" id="importBtn" type="button">Import</button>
-      <button class="danger" id="clearMonthBtn" type="button">Clear month</button>
+      <!-- Clear month removed (to prevent accidental deletes) -->
     </div>
   </div>
 
@@ -294,7 +293,7 @@
           <button class="ghost" id="setAllBookedBtn" type="button">Set all Booked</button>
         </div>
         <div class="actionsRight">
-          <button class="danger" id="deleteDateBtn" type="button">Clear this date</button>
+          <!-- Clear this date removed (to prevent accidental deletes) -->
           <button class="ghost" id="cancelBtn" type="button">Close</button>
           <button class="primary" id="saveBtn" type="button">Save</button>
         </div>
@@ -353,14 +352,12 @@
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelBtn = document.getElementById("cancelBtn");
   const saveBtn = document.getElementById("saveBtn");
-  const deleteDateBtn = document.getElementById("deleteDateBtn");
   const setAllAvailableBtn = document.getElementById("setAllAvailableBtn");
   const setAllBookedBtn = document.getElementById("setAllBookedBtn");
   const unitGrid = document.getElementById("unitGrid");
 
   const exportBtn = document.getElementById("exportBtn");
   const importBtn = document.getElementById("importBtn");
-  const clearMonthBtn = document.getElementById("clearMonthBtn");
 
   const MONTHS = [
     "January","February","March","April","May","June",
@@ -559,15 +556,7 @@
     closeModal();
   });
 
-  deleteDateBtn.addEventListener("click", () => {
-    if (!activeDate) return;
-    delete data[activeDate]; // back to default (all available)
-    persist();
-    render();
-    closeModal();
-  });
-
-  // ====== Export / Import / Clear Month ======
+  // ====== Export / Import ======
   exportBtn.addEventListener("click", () => {
     const payload = JSON.stringify({ year: YEAR, units: UNITS, data }, null, 2);
     const blob = new Blob([payload], { type: "application/json" });
@@ -604,17 +593,6 @@
       }
     };
     input.click();
-  });
-
-  clearMonthBtn.addEventListener("click", () => {
-    const m = currentMonth + 1;
-    const prefix = `${YEAR}-${String(m).padStart(2,"0")}-`;
-    const keys = Object.keys(data).filter(k => k.startsWith(prefix));
-    if (!keys.length) return alert("Nothing to clear for this month.");
-    if (!confirm(`Clear all saved entries for ${MONTHS[currentMonth]} ${YEAR}?`)) return;
-    keys.forEach(k => delete data[k]);
-    persist();
-    render();
   });
 
   // ====== Storage helpers ======
