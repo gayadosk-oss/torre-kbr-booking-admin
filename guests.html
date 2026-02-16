@@ -91,12 +91,11 @@
     .monthTitle strong{font-size:16px}
     .monthTitle span{color:var(--muted); font-size:12px}
 
-    /* ✅ IMPORTANT: minmax(0,1fr) prevents overflow + misalignment */
+    /* ✅ Prevent overflow/misalignment */
     .dow{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:10px; padding:0 6px 8px}
     .dow div{color:var(--muted); font-weight:800; font-size:12px; text-transform:uppercase}
-
-    /* ✅ IMPORTANT: minmax(0,1fr) prevents Feb 7 floating/outside */
     .days{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:10px; padding:0 6px 6px}
+
     .day{
       min-height:118px;
       border:1px solid var(--border);
@@ -106,13 +105,12 @@
       display:flex; flex-direction:column; gap:8px;
       cursor:pointer;
       transition:transform .05s ease;
-      min-width:0; /* ✅ allows content to shrink inside grid columns */
+      min-width:0;
     }
     .day:hover{transform:translateY(-1px)}
     .day.muted{background:#fafafa; color:#9ca3af; cursor:default}
     .date{font-weight:900; font-size:13px}
 
-    /* ✅ prevent long preview/name from forcing column width */
     .meta{
       color:var(--muted);
       font-size:12px;
@@ -145,7 +143,7 @@
       justify-content:space-between;
       margin-top:auto;
       min-width:0;
-      flex-wrap:wrap; /* ✅ lets button wrap instead of pushing column wider */
+      flex-wrap:wrap;
     }
     .miniBtn{
       border:1px solid var(--border);
@@ -160,10 +158,10 @@
       align-items:center;
       gap:6px;
       max-width:100%;
-      min-width:0;            /* ✅ allow shrinking */
-      justify-content:center; /* ✅ looks better when wrapping */
+      min-width:0;
+      justify-content:center;
       text-align:center;
-      white-space:normal;     /* ✅ allow wrap so it won’t overflow the grid */
+      white-space:normal;
       line-height:1.15;
     }
     .miniBtn.primary{background:var(--accent);color:#fff;border-color:transparent}
@@ -171,19 +169,57 @@
 
     .footerNote{margin-top:10px; color:var(--muted); font-size:12px; text-align:center}
 
-    /* Modal */
+    /* =========================
+       ✅ iOS/Phone Modal Scroll Fix
+       ========================= */
+
+    /* Overlay becomes scroll container (important for iPhone) */
     .modalOverlay{
-      position:fixed; inset:0; background:rgba(17,24,39,.55);
-      display:none; align-items:center; justify-content:center; padding:16px; z-index:20;
+      position:fixed; inset:0;
+      background:rgba(17,24,39,.55);
+      display:none;
+      padding:16px;
+      z-index:20;
+
+      overflow:auto;                    /* ✅ allow scroll */
+      -webkit-overflow-scrolling:touch; /* ✅ smooth iOS scroll */
+      align-items:flex-start;           /* ✅ start at top */
+      justify-content:center;
     }
+
+    /* Modal itself also scrolls if taller than viewport */
     .modal{
       width:min(980px, 100%);
-      background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+      background:#fff;
+      border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
       border:1px solid var(--border);
       padding:14px;
+
+      max-height:calc(100vh - 32px);    /* ✅ fit in screen */
+      overflow:auto;                    /* ✅ scroll inside */
+      -webkit-overflow-scrolling:touch; /* ✅ iOS momentum scroll */
+      margin:0 auto;                    /* ✅ center */
     }
-    .modalHeader{display:flex; justify-content:space-between; align-items:center; gap:10px}
+
+    .modalHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      position:sticky;                  /* ✅ keep header visible while scrolling */
+      top:0;
+      background:#fff;
+      z-index:2;
+      padding-bottom:10px;
+      border-bottom:1px solid var(--border);
+      margin:-14px -14px 0;
+      padding:14px;
+      border-top-left-radius:18px;
+      border-top-right-radius:18px;
+    }
     .modalHeader strong{font-size:16px}
+
     .xBtn{
       border:1px solid var(--border);
       background:#fff;
@@ -207,8 +243,8 @@
 
     .formWrap{
       margin-top:10px;
-      border-top:1px solid var(--border);
       padding-top:12px;
+      padding-bottom:14px; /* ✅ extra bottom so buttons are reachable */
     }
 
     .modalBodySplit{
@@ -217,6 +253,7 @@
       gap:14px;
       margin-top:10px;
     }
+
     .entryList{
       border:1px solid var(--border);
       border-radius:14px;
@@ -224,8 +261,6 @@
       overflow:hidden;
       min-width:0;
     }
-
-    /* ✅ FIX: "+ New entry" never gets cut */
     .entryListHeader{
       padding:10px 12px;
       background:var(--soft);
@@ -234,7 +269,7 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      flex-wrap:wrap;   /* ✅ allow wrap */
+      flex-wrap:wrap;  /* ✅ button can wrap on small screens */
       min-width:0;
     }
     .entryListHeader strong{
@@ -242,13 +277,12 @@
       flex:1;
       min-width:90px;
     }
-    .entryListHeader .miniBtn{
-      max-width:100%;
-    }
+    .entryListHeader .miniBtn{max-width:100%}
 
     .entryItems{
       max-height:420px;
       overflow:auto;
+      -webkit-overflow-scrolling:touch;
     }
     .entryItem{
       display:flex;
@@ -289,6 +323,7 @@
     }
     .formGrid .full{grid-column: 1 / -1}
     .formGrid .two{grid-column: span 2}
+
     .field label{display:block;margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:900}
     .field input, .field select, .field textarea{
       width:100%;
@@ -311,27 +346,28 @@
     .modalActions{
       display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;
       margin-top:12px;
+      position:sticky;                  /* ✅ keep buttons reachable */
+      bottom:0;
+      background:#fff;
+      padding-top:10px;
+      padding-bottom:10px;
     }
     .small{font-size:12px; color:var(--muted); margin-top:8px}
 
-    /* ✅ MOBILE: calendar becomes 2 columns; modal becomes stacked; button full width in header */
     @media (max-width:820px){
       .days{grid-template-columns:repeat(2, minmax(0,1fr))}
       .dow{display:none}
+
+      .modalOverlay{padding:12px}
+      .modal{max-height:calc(100vh - 24px)}
+
       .modalBodySplit{grid-template-columns:1fr}
       .entryItems{max-height:220px}
       .formGrid{grid-template-columns:1fr}
       .formGrid .two{grid-column: 1 / -1}
 
-      /* ✅ "+ New entry" always visible on phone */
-      .entryListHeader .miniBtn{
-        width:100%;
-      }
-
-      /* ✅ day card CTA stacks nicely on phone */
-      .actionsRow .miniBtn{
-        width:100%;
-      }
+      .entryListHeader .miniBtn{width:100%}
+      .actionsRow .miniBtn{width:100%}
     }
     @media (max-width:640px){
       input{min-width:180px}
@@ -490,8 +526,6 @@
     "July","August","September","October","November","December"
   ];
 
-  // Data shape:
-  // { "YYYY-MM-DD": { entries: { "D1": {...}, "D2": {...} } } }
   let data = loadData();
 
   // ===== Elements =====
@@ -545,7 +579,6 @@
     currentMonth = Number(monthSelect.value);
     render();
   });
-
   searchInput.addEventListener("input", () => render());
 
   // ===== Data helpers =====
@@ -557,7 +590,6 @@
   function getEntriesForDate(dateStr){
     return ensureDate(dateStr).entries;
   }
-
   function defaultEntry(){
     return {
       guestName:"",
@@ -572,7 +604,6 @@
       remarks:""
     };
   }
-
   function hasAnyField(obj){
     const o = obj || {};
     const keys = Object.keys(defaultEntry());
@@ -606,7 +637,6 @@
       const entries = getEntriesForDate(dateStr);
       const units = Object.keys(entries).filter(u => hasAnyField(entries[u]));
 
-      // Search filter
       if (q){
         const hay = units.map(u => {
           const e = entries[u] || {};
@@ -633,12 +663,10 @@
       el.innerHTML = `
         <div class="date">${MONTHS[currentMonth].slice(0,3)} ${d}</div>
         <div class="meta">${escapeHtml(preview)}</div>
-
         <div class="actionsRow">
           <span class="pill ${count ? "ok" : "none"}">${count ? `${count} Saved` : "Empty"}</span>
           <button class="miniBtn primary" type="button" data-action="view" data-date="${escapeAttr(dateStr)}">View / Edit</button>
         </div>
-
         <div class="hint">Tap View / Edit</div>
       `;
 
@@ -651,9 +679,30 @@
     }
   }
 
+  // ===== iOS-friendly background scroll lock =====
+  let __scrollY = 0;
+  function lockBodyScroll(){
+    __scrollY = window.scrollY || 0;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${__scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+  }
+  function unlockBodyScroll(){
+    const top = document.body.style.top;
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    const y = top ? Math.abs(parseInt(top, 10)) : __scrollY;
+    window.scrollTo(0, y || 0);
+  }
+
   // ===== Modal logic (View/Edit + autosave) =====
   let activeDate = null;
-  let activeEditUnit = null; // currently loaded unit (for edits)
+  let activeEditUnit = null;
   let isEditMode = false;
   let saveTimer = null;
 
@@ -673,7 +722,6 @@
     modePill.classList.toggle("edit", isEditMode);
 
     toggleEditBtn.textContent = isEditMode ? "Done" : "Edit";
-
     if (!isEditMode) showSaved();
   }
 
@@ -690,7 +738,12 @@
     modalSub.textContent = `Choose an entry to view. Tap Edit to modify. + New entry to add.`;
     showSaved();
 
+    lockBodyScroll();                 // ✅ prevents iOS “stuck” scroll
     modalOverlay.style.display = "flex";
+
+    // ✅ ensure modal starts at top on open
+    modalOverlay.scrollTop = 0;
+
     renderEntriesList();
 
     const entries = getEntriesForDate(dateStr);
@@ -709,6 +762,7 @@
 
   function closeModal(){
     modalOverlay.style.display = "none";
+    unlockBodyScroll();               // ✅ restore page scroll on iPhone
     activeDate = null;
     activeEditUnit = null;
     setEditMode(false);
