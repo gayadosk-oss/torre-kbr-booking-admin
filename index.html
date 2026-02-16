@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Torre KBR Admin Booking</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .day {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      min-height: 100px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .day:hover {
+      background: #e9f2ff;
+    }
+
+    .units-panel {
+      margin-top: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .unit-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .booked {
+      color: red;
+      font-weight: bold;
+    }
+
+    .available {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Torre KBR Booking Admin</h1>
+
+<div class="calendar" id="calendar"></div>
+
+<div class="units-panel" id="unitsPanel">
+  <h2 id="selectedDateTitle"></h2>
+  <div id="unitsList"></div>
+</div>
+
+<script>
+  const units = [
+    "D1","D2","C1","C2","C3",
+    "B1","B2","A1","A2",
+    "ROOM A","ROOM B","ROOM C"
+  ];
+
+  // Temporary sample bookings
+  const bookings = [
+    { unit: "D1", guest: "Juan Cruz", date: "2026-02-05" },
+    { unit: "C2", guest: "Maria Santos", date: "2026-02-05" },
+    { unit: "A1", guest: "David Lee", date: "2026-02-10" }
+  ];
+
+  const calendar = document.getElementById("calendar");
+
+  function generateCalendar() {
+    for (let i = 1; i <= 28; i++) {
+      const day = document.createElement("div");
+      day.className = "day";
+      day.innerHTML = "<strong>Feb " + i + "</strong>";
+      day.onclick = () => showUnits(i);
+      calendar.appendChild(day);
+    }
+  }
+
+  function showUnits(dayNumber) {
+    const date = "2026-02-" + String(dayNumber).padStart(2, "0");
+
+    document.getElementById("unitsPanel").style.display = "block";
+    document.getElementById("selectedDateTitle").innerText =
+      "Bookings for Feb " + dayNumber;
+
+    const unitsList = document.getElementById("unitsList");
+    unitsList.innerHTML = "";
+
+    units.forEach(unit => {
+      const booking = bookings.find(
+        b => b.unit === unit && b.date === date
+      );
+
+      const row = document.createElement("div");
+      row.className = "unit-row";
+
+      if (booking) {
+        row.innerHTML = `
+          <span>${unit}</span>
+          <span class="booked">BOOKED - ${booking.guest}</span>
+        `;
+      } else {
+        row.innerHTML = `
+          <span>${unit}</span>
+          <span class="available">AVAILABLE</span>
+        `;
+      }
+
+      unitsList.appendChild(row);
+    });
+  }
+
+  generateCalendar();
+</script>
+
+</body>
+</html>
