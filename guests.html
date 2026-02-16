@@ -91,7 +91,6 @@
     .monthTitle strong{font-size:16px}
     .monthTitle span{color:var(--muted); font-size:12px}
 
-    /* ✅ Prevent overflow/misalignment */
     .dow{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:10px; padding:0 6px 8px}
     .dow div{color:var(--muted); font-weight:800; font-size:12px; text-transform:uppercase}
     .days{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:10px; padding:0 6px 6px}
@@ -169,11 +168,6 @@
 
     .footerNote{margin-top:10px; color:var(--muted); font-size:12px; text-align:center}
 
-    /* =========================
-       ✅ iOS/Phone Modal Scroll Fix
-       ========================= */
-
-    /* Overlay becomes scroll container (important for iPhone) */
     .modalOverlay{
       position:fixed; inset:0;
       background:rgba(17,24,39,.55);
@@ -181,13 +175,12 @@
       padding:16px;
       z-index:20;
 
-      overflow:auto;                    /* ✅ allow scroll */
-      -webkit-overflow-scrolling:touch; /* ✅ smooth iOS scroll */
-      align-items:flex-start;           /* ✅ start at top */
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      align-items:flex-start;
       justify-content:center;
     }
 
-    /* Modal itself also scrolls if taller than viewport */
     .modal{
       width:min(980px, 100%);
       background:#fff;
@@ -196,10 +189,10 @@
       border:1px solid var(--border);
       padding:14px;
 
-      max-height:calc(100vh - 32px);    /* ✅ fit in screen */
-      overflow:auto;                    /* ✅ scroll inside */
-      -webkit-overflow-scrolling:touch; /* ✅ iOS momentum scroll */
-      margin:0 auto;                    /* ✅ center */
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      margin:0 auto;
     }
 
     .modalHeader{
@@ -207,7 +200,7 @@
       justify-content:space-between;
       align-items:center;
       gap:10px;
-      position:sticky;                  /* ✅ keep header visible while scrolling */
+      position:sticky;
       top:0;
       background:#fff;
       z-index:2;
@@ -244,7 +237,7 @@
     .formWrap{
       margin-top:10px;
       padding-top:12px;
-      padding-bottom:14px; /* ✅ extra bottom so buttons are reachable */
+      padding-bottom:14px;
     }
 
     .modalBodySplit{
@@ -269,7 +262,7 @@
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      flex-wrap:wrap;  /* ✅ button can wrap on small screens */
+      flex-wrap:wrap;
       min-width:0;
     }
     .entryListHeader strong{
@@ -346,7 +339,7 @@
     .modalActions{
       display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;
       margin-top:12px;
-      position:sticky;                  /* ✅ keep buttons reachable */
+      position:sticky;
       bottom:0;
       background:#fff;
       padding-top:10px;
@@ -400,7 +393,6 @@
     <div class="right">
       <button class="btn" id="exportBtn">Export</button>
       <button class="btn" id="importBtn">Import</button>
-      <!-- Clear Month removed (to prevent accidental deletes) -->
     </div>
   </div>
 
@@ -417,7 +409,7 @@
     <div class="days" id="daysGrid"></div>
   </div>
 
-  <div class="footerNote">Tip: Export = backup / transfer. (Data is saved locally in your browser.)</div>
+  <div class="footerNote">Tip: Export = backup / transfer. (This page syncs to Google Sheets.)</div>
 </div>
 
 <!-- Modal -->
@@ -508,7 +500,12 @@
             <button class="btn primary" id="saveBtn" type="button">Save</button>
           </div>
 
-          <div class="small">Rule: One entry per unit per date. Units already used are disabled when adding new. (No Clear/Delete buttons to prevent accidental loss.)</div>
+          <div class="small">
+            Rule: One entry per unit per date. Units already used are disabled when adding new.
+            (No Clear/Delete buttons to prevent accidental loss.)
+          </div>
+
+          <div class="small" id="syncStatus">Loading from Google Sheets…</div>
         </div>
       </div>
     </div>
@@ -520,13 +517,19 @@
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-guests-byunit-${YEAR}`;
 
+  // ===== Google Apps Script Web App =====
+  const API_URL = "https://script.google.com/macros/s/AKfycbxhgciD9s7x4pPtyGffjzPhLED_DQ0eONXj_iVsKoQu-meszK9O6JRNyQT0YKvBqxg1xQ/exec";
+  const API_KEY = "kbr_super_secret_2026";         // must match Code.gs
+  const TAB_NAME = "guests";                        // must match your Sheet tab name in Google Sheets
+  const CLOUD_KEY = STORAGE_KEY;                    // unique row key in the tab
+
   const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
   const MONTHS = [
     "January","February","March","April","May","June",
     "July","August","September","October","November","December"
   ];
 
-  let data = loadData();
+  let data = {}; // loaded on init
 
   // ===== Elements =====
   const monthSelect = document.getElementById("monthSelect");
@@ -544,6 +547,7 @@
   const cancelBtn    = document.getElementById("cancelBtn");
   const saveBtn      = document.getElementById("saveBtn");
   const savePill     = document.getElementById("savePill");
+  const syncStatus   = document.getElementById("syncStatus");
 
   const modePill     = document.getElementById("modePill");
   const toggleEditBtn = document.getElementById("toggleEditBtn");
@@ -562,6 +566,66 @@
   const mopEl        = document.getElementById("mop");
   const contactEl    = document.getElementById("contact");
   const remarksEl    = document.getElementById("remarks");
+
+  function setSync(msg){ if (syncStatus) syncStatus.textContent = msg; }
+
+  // ===== Cloud API calls =====
+  async function apiGet(tab, key){
+    const url = `${API_URL}?key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(key)}`;
+    const res = await fetch(url, { method:"GET" });
+    if (!res.ok) throw new Error("GET failed");
+    const out = await res.json();
+    return out?.data ?? null;
+  }
+
+  async function apiSet(tab, key, obj){
+    const res = await fetch(API_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ key: API_KEY, tab, k: key, data: obj })
+    });
+    if (!res.ok) throw new Error("POST failed");
+    return res.json();
+  }
+
+  async function loadDataCloudFirst(){
+    // Cloud first
+    try{
+      const cloud = await apiGet(TAB_NAME, CLOUD_KEY);
+      if (cloud && typeof cloud === "object") return cloud;
+    }catch(e){
+      console.warn("Cloud load failed; will use local cache.", e);
+    }
+    // Local fallback
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch{
+      return {};
+    }
+  }
+
+  // Debounced persist (prevents spamming your Apps Script)
+  let __persistTimer = null;
+  function persistSoon(){
+    clearTimeout(__persistTimer);
+    __persistTimer = setTimeout(() => persist(), 600);
+  }
+
+  async function persist(){
+    // local cache always
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+
+    // cloud save
+    try{
+      setSync("Saving to Google Sheets…");
+      await apiSet(TAB_NAME, CLOUD_KEY, data);
+      setSync("Saved to Google Sheets (syncs across devices).");
+    }catch(e){
+      console.warn("Cloud save failed; kept locally.", e);
+      setSync("Saved locally only (cloud sync failed).");
+    }
+  }
 
   // ===== Month selector =====
   MONTHS.forEach((m, idx) => {
@@ -738,10 +802,8 @@
     modalSub.textContent = `Choose an entry to view. Tap Edit to modify. + New entry to add.`;
     showSaved();
 
-    lockBodyScroll();                 // ✅ prevents iOS “stuck” scroll
+    lockBodyScroll();
     modalOverlay.style.display = "flex";
-
-    // ✅ ensure modal starts at top on open
     modalOverlay.scrollTop = 0;
 
     renderEntriesList();
@@ -762,7 +824,7 @@
 
   function closeModal(){
     modalOverlay.style.display = "none";
-    unlockBodyScroll();               // ✅ restore page scroll on iPhone
+    unlockBodyScroll();
     activeDate = null;
     activeEditUnit = null;
     setEditMode(false);
@@ -903,7 +965,7 @@
 
     showSaving();
     if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => doSave(true), 250);
+    saveTimer = setTimeout(() => doSave(true), 350);
   }
 
   saveBtn.addEventListener("click", () => doSave(false));
@@ -952,7 +1014,9 @@
     const stillHasAny = Object.keys(entries).some(u => entries[u] && hasAnyField(entries[u]));
     if (!stillHasAny) delete data[activeDate];
 
-    persist();
+    // ✅ Save locally + Google Sheets (debounced)
+    persistSoon();
+
     showSaved();
     render();
     renderEntriesList();
@@ -996,27 +1060,15 @@
           return;
         }
         data = parsed.data || {};
-        persist();
+        persistSoon();
         render();
-        alert("Imported successfully!");
+        alert("Imported successfully! (It will sync to Google Sheets)");
       }catch{
         alert("Could not import: invalid JSON.");
       }
     };
     input.click();
   });
-
-  function loadData(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    }catch{
-      return {};
-    }
-  }
-  function persist(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
 
   function toISODate(y,m,d){
     return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
@@ -1036,8 +1088,14 @@
       .replaceAll("'","&#039;");
   }
 
-  setEditMode(false);
-  render();
+  // ===== Init =====
+  (async function init(){
+    setEditMode(false);
+    setSync("Loading from Google Sheets…");
+    data = await loadDataCloudFirst();
+    render();
+    setSync("Ready. Auto-saves sync across devices (Google Sheets).");
+  })();
 </script>
 </body>
 </html>
