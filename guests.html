@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Torre KBR • Guests Information (2026)</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 10px 28px rgba(17,24,39,.08);
+      --accent:#111827;
+      --soft:#f9fafb;
+      --danger:#dc2626;
+      --dangerBg:#fee2e2;
+      --dangerBd:#fecaca;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    header{
+      position:sticky; top:0; z-index:5;
+      background:#fff;
+      border-bottom:1px solid var(--border);
+      padding:14px 16px;
+    }
+    .headerInner{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .sub{margin:4px 0 0;color:var(--muted);font-size:12.5px}
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      padding:9px 14px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:13px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+    .btn.danger{background:var(--dangerBg);border-color:var(--dangerBd);color:#991b1b}
+    .wrap{max-width:1180px;margin:0 auto;padding:16px}
+
+    .toolbar{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .left,.right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    select,input{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+      background:#fff;
+      color:var(--text);
+      min-height:40px;
+      outline:none;
+    }
+    input{min-width:240px}
+    label{font-size:12px;color:var(--muted);font-weight:700}
+
+    .tableCard{
+      margin-top:14px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .tableTop{
+      padding:12px 12px 10px;
+      border-bottom:1px solid var(--border);
+      background:var(--soft);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .titleRow strong{font-size:15px}
+    .titleRow span{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+    .savePill{
+      font-size:12px;
+      font-weight:800;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--muted);
+    }
+    .savePill.ok{color:#065f46;border-color:#a7f3d0;background:#ecfdf5}
+
+    .tableWrap{overflow:auto}
+    table{
+      border-collapse:separate;
+      border-spacing:0;
+      width:1200px; /* scroll on small screens */
+      min-width:100%;
+      background:#fff;
+    }
+    thead th{
+      position:sticky; top:0;
+      background:#0b1220;
+      color:#fff;
+      font-size:12px;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      padding:10px 10px;
+      border-right:1px solid rgba(255,255,255,.08);
+      z-index:2;
+      white-space:nowrap;
+    }
+    thead th:first-child{position:sticky; left:0; z-index:3}
+    tbody td{
+      border-bottom:1px solid var(--border);
+      border-right:1px solid var(--border);
+      padding:8px;
+      vertical-align:top;
+      background:#fff;
+    }
+    tbody tr:nth-child(even) td{background:#fcfcfd}
+    tbody td:first-child{
+      position:sticky;
+      left:0;
+      background:#eef2ff;
+      font-weight:800;
+      color:#111827;
+      white-space:nowrap;
+      z-index:1;
+    }
+
+    .cellInput, .cellArea, .cellSelect{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:13px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+    }
+    .cellArea{min-height:40px;resize:vertical}
+    .num{max-width:110px}
+    .money{max-width:140px}
+    .smallNote{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}
+
+    @media (max-width:700px){
+      input{min-width:160px}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="headerInner">
+    <div>
+      <h1>Torre KBR • Guests Information</h1>
+      <p class="sub">2026 • Type directly in the table • Auto-saves on this device</p>
+    </div>
+    <a class="btn primary" href="index.html">⬅ Main Menu</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="toolbar">
+    <div class="left">
+      <div>
+        <label>Month</label><br/>
+        <select id="monthSelect"></select>
+      </div>
+
+      <div>
+        <label>Search</label><br/>
+        <input id="searchInput" placeholder="Search guest / contact / remarks..." />
+      </div>
+    </div>
+
+    <div class="right">
+      <button class="btn" id="exportBtn">Export</button>
+      <button class="btn" id="importBtn">Import</button>
+      <button class="btn danger" id="clearMonthBtn">Clear month</button>
+    </div>
+  </div>
+
+  <div class="tableCard">
+    <div class="tableTop">
+      <div class="titleRow">
+        <strong id="monthTitle">January 2026</strong>
+        <span id="monthMeta">Showing all dates for the month</span>
+      </div>
+      <div class="savePill" id="savePill">Saved</div>
+    </div>
+
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:130px">Date</th>
+            <th style="min-width:220px">Name of Guest/s</th>
+            <th style="min-width:110px">No. of Pax</th>
+            <th style="min-width:120px">Check-in</th>
+            <th style="min-width:120px">Check-out</th>
+            <th style="min-width:140px">Unit</th>
+            <th style="min-width:140px">Downpayment</th>
+            <th style="min-width:120px">Balance</th>
+            <th style="min-width:120px">Total</th>
+            <th style="min-width:140px">M.O.P</th>
+            <th style="min-width:160px">Contact No.</th>
+            <th style="min-width:220px">Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="smallNote">
+    Tip: Use <b>Export</b> to back up or move your data to another device. (This saves locally in your browser.)
+  </div>
+</div>
+
+<script>
+  // ===== Config =====
+  const YEAR = 2026;
+  const STORAGE_KEY = `torre-kbr-guests-${YEAR}`;
+
+  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
+
+  const MONTHS = [
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+  ];
+
+  // Data shape:
+  // {
+  //  "2026-02-14": { guestName:"", pax:"", checkin:"", checkout:"", unit:"", down:"", bal:"", total:"", mop:"", contact:"", remarks:"" },
+  //  ...
+  // }
+  let data = loadData();
+
+  // ===== Elements =====
+  const monthSelect = document.getElementById("monthSelect");
+  const monthTitle = document.getElementById("monthTitle");
+  const monthMeta  = document.getElementById("monthMeta");
+  const tbody = document.getElementById("tbody");
+  const searchInput = document.getElementById("searchInput");
+  const exportBtn = document.getElementById("exportBtn");
+  const importBtn = document.getElementById("importBtn");
+  const clearMonthBtn = document.getElementById("clearMonthBtn");
+  const savePill = document.getElementById("savePill");
+
+  // ===== Month selector =====
+  MONTHS.forEach((m, idx) => {
+    const opt = document.createElement("option");
+    opt.value = idx;
+    opt.textContent = `${m} ${YEAR}`;
+    monthSelect.appendChild(opt);
+  });
+
+  const now = new Date();
+  let currentMonth = (now.getFullYear() === YEAR) ? now.getMonth() : 0;
+  monthSelect.value = String(currentMonth);
+
+  monthSelect.addEventListener("change", () => {
+    currentMonth = Number(monthSelect.value);
+    render();
+  });
+
+  searchInput.addEventListener("input", () => render());
+
+  // ===== Render =====
+  function render(){
+    const first = new Date(YEAR, currentMonth, 1);
+    const last  = new Date(YEAR, currentMonth + 1, 0);
+    const daysInMonth = last.getDate();
+
+    monthTitle.textContent = `${MONTHS[currentMonth]} ${YEAR}`;
+    const q = searchInput.value.trim().toLowerCase();
+    monthMeta.textContent = q ? `Filtered by: "${searchInput.value.trim()}"` : `Showing ${daysInMonth} dates`;
+
+    tbody.innerHTML = "";
+
+    for(let d=1; d<=daysInMonth; d++){
+      const dateStr = toISODate(YEAR, currentMonth+1, d);
+      const rowData = data[dateStr] || defaultRow();
+
+      // If searching, hide rows that don't match any key fields
+      if (q){
+        const hay = [
+          rowData.guestName, rowData.contact, rowData.remarks, rowData.mop, rowData.unit
+        ].join(" ").toLowerCase();
+        if (!hay.includes(q)) continue;
+      }
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${formatPrettyDate(YEAR, currentMonth, d)}</td>
+
+        <td>${inputHtml("guestName", dateStr, rowData.guestName, "cellInput", "Guest name/s")}</td>
+        <td>${inputHtml("pax",      dateStr, rowData.pax,      "cellInput num", "0")}</td>
+        <td>${inputHtml("checkin",  dateStr, rowData.checkin,  "cellInput", "e.g., Feb 14")}</td>
+        <td>${inputHtml("checkout", dateStr, rowData.checkout, "cellInput", "e.g., Feb 15")}</td>
+
+        <td>${selectHtml("unit", dateStr, rowData.unit)}</td>
+
+        <td>${inputHtml("down",   dateStr, rowData.down,   "cellInput money", "₱")}</td>
+        <td>${inputHtml("bal",    dateStr, rowData.bal,    "cellInput money", "₱")}</td>
+        <td>${inputHtml("total",  dateStr, rowData.total,  "cellInput money", "₱")}</td>
+
+        <td>${inputHtml("mop",    dateStr, rowData.mop,    "cellInput", "Cash / GCash / Bank")}</td>
+        <td>${inputHtml("contact",dateStr, rowData.contact,"cellInput", "09xx...")}</td>
+
+        <td>${areaHtml("remarks", dateStr, rowData.remarks)}</td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+
+    // attach handlers after render
+    tbody.querySelectorAll("input[data-date], textarea[data-date], select[data-date]").forEach(el => {
+      el.addEventListener("input", onCellChange);
+      el.addEventListener("change", onCellChange);
+    });
+  }
+
+  function defaultRow(){
+    return {
+      guestName:"", pax:"", checkin:"", checkout:"",
+      unit:"",
+      down:"", bal:"", total:"",
+      mop:"", contact:"", remarks:""
+    };
+  }
+
+  function inputHtml(key, date, value, cls, placeholder){
+    return `<input class="${cls} cellInput" data-date="${date}" data-key="${key}" value="${escapeAttr(value)}" placeholder="${escapeAttr(placeholder)}" />`;
+  }
+
+  function areaHtml(key, date, value){
+    return `<textarea class="cellArea" data-date="${date}" data-key="${key}" placeholder="Notes...">${escapeHtml(value)}</textarea>`;
+  }
+
+  function selectHtml(key, date, value){
+    const opts = ['<option value="">— Select —</option>']
+      .concat(UNITS.map(u => `<option value="${escapeAttr(u)}"${u===value?' selected':''}>${u}</option>`))
+      .join("");
+    return `<select class="cellSelect" data-date="${date}" data-key="${key}">${opts}</select>`;
+  }
+
+  // ===== Auto-save (debounced) =====
+  let saveTimer = null;
+
+  function onCellChange(e){
+    const el = e.target;
+    const date = el.getAttribute("data-date");
+    const key  = el.getAttribute("data-key");
+    if (!date || !key) return;
+
+    const current = data[date] || defaultRow();
+    current[key] = (el.tagName === "TEXTAREA") ? el.value : el.value;
+    data[date] = current;
+
+    showSaving();
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      persist();
+      showSaved();
+    }, 250);
+  }
+
+  function showSaving(){
+    savePill.textContent = "Saving…";
+    savePill.classList.remove("ok");
+  }
+  function showSaved(){
+    savePill.textContent = "Saved";
+    savePill.classList.add("ok");
+  }
+
+  // ===== Export / Import / Clear Month =====
+  exportBtn.addEventListener("click", () => {
+    const payload = JSON.stringify({ year: YEAR, data }, null, 2);
+    const blob = new Blob([payload], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `torre-kbr-guests-${YEAR}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener("click", async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      try{
+        const parsed = JSON.parse(text);
+        if (!parsed || typeof parsed !== "object" || !parsed.data){
+          alert("Invalid file format.");
+          return;
+        }
+        data = parsed.data;
+        persist();
+        render();
+        alert("Imported successfully!");
+      }catch{
+        alert("Could not import: invalid JSON.");
+      }
+    };
+    input.click();
+  });
+
+  clearMonthBtn.addEventListener("click", () => {
+    const m = currentMonth + 1;
+    const prefix = `${YEAR}-${String(m).padStart(2,"0")}-`;
+    const keys = Object.keys(data).filter(k => k.startsWith(prefix));
+    if (!keys.length) return alert("Nothing to clear for this month.");
+
+    if (!confirm(`Clear all guest entries for ${MONTHS[currentMonth]} ${YEAR}?`)) return;
+
+    keys.forEach(k => delete data[k]);
+    persist();
+    render();
+  });
+
+  // ===== Storage =====
+  function loadData(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch{
+      return {};
+    }
+  }
+  function persist(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  // ===== Utils =====
+  function toISODate(y,m,d){
+    return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  }
+
+  function formatPrettyDate(y, monthIndex, day){
+    const short = MONTHS[monthIndex].slice(0,3);
+    return `${short} ${day}, ${y}`;
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+  function escapeAttr(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // init
+  render();
+  showSaved();
+</script>
+</body>
+</html>
