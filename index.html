@@ -7,97 +7,308 @@
 
 <style>
 :root{
+  /* Luxury palette */
+  --bg1:#0b0f17;         /* deep navy */
+  --bg2:#121a2b;         /* richer navy */
+  --card:#0f172a;        /* slate/navy */
+  --card2:#0b1224;       /* darker */
+  --text:#f8fafc;        /* near-white */
+  --muted:#b6c0d1;
+  --border:rgba(255,255,255,.10);
+
+  --gold1:#f7e7a7;
+  --gold2:#d7b45a;
+  --gold3:#b3892f;
+
   --blue:#2563eb;
   --blueHover:#1e40af;
-  --dark:#374151;
-  --darkHover:#111827;
+
+  --darkBtn:#111827;
+  --darkBtnHover:#0b1220;
+
+  --shadow:0 28px 70px rgba(0,0,0,.45);
 }
 
 *{box-sizing:border-box}
 
+html,body{height:100%}
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background:linear-gradient(135deg,#f3f4f6,#e5e7eb);
+  color:var(--text);
+
+  /* Premium background */
+  background:
+    radial-gradient(1000px 600px at 15% 20%, rgba(215,180,90,.18), transparent 60%),
+    radial-gradient(900px 520px at 85% 30%, rgba(37,99,235,.18), transparent 55%),
+    radial-gradient(800px 500px at 50% 85%, rgba(255,255,255,.06), transparent 60%),
+    linear-gradient(135deg, var(--bg1), var(--bg2));
+
   display:flex;
   align-items:center;
   justify-content:center;
-  height:100vh;
+  padding:18px;
+  overflow:hidden;
+}
+
+/* subtle floating grain */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity:.08;
+  pointer-events:none;
+  transform: translateZ(0);
 }
 
 .container{
+  width:min(420px, 100%);
   text-align:center;
-  padding:40px;
-  border-radius:20px;
-  background:rgba(255,255,255,0.7);
-  backdrop-filter:blur(14px);
-  box-shadow:0 20px 40px rgba(0,0,0,0.08);
-  width:360px;
-}
 
-.main-logo{
-  width:240px;
-  max-width:80%;
-  height:auto;
-  margin-bottom:20px;
-  filter:drop-shadow(0 10px 15px rgba(0,0,0,0.15));
-}
+  padding:34px 26px 26px;
+  border-radius:26px;
 
-h1{
-  margin:0 0 30px 0;
-  font-size:26px;
-  letter-spacing:.5px;
-}
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border:1px solid var(--border);
+  box-shadow: var(--shadow);
 
-.menu-btn{
-  display:block;
-  width:100%;
-  padding:15px;
-  border-radius:14px;
-  text-decoration:none;
-  font-weight:600;
-  font-size:15px;
-  margin:12px 0;
-  transition:all .25s ease;
-  color:#fff;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
   position:relative;
   overflow:hidden;
 }
 
+/* gold edge glow */
+.container::after{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:28px;
+  padding:2px;
+  background: linear-gradient(135deg, rgba(247,231,167,.55), rgba(215,180,90,.18), rgba(37,99,235,.12));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events:none;
+}
+
+/* top highlight */
+.container::before{
+  content:"";
+  position:absolute;
+  left:-30%;
+  top:-40%;
+  width:160%;
+  height:70%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.16), transparent 60%);
+  pointer-events:none;
+}
+
+.brand{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.logoWrap{
+  width:112px;
+  height:112px;
+  border-radius:24px;
+  display:grid;
+  place-items:center;
+
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+
+  position:relative;
+  overflow:hidden;
+}
+
+.logoWrap::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(120deg, transparent, rgba(247,231,167,.25), transparent);
+  transform: translateX(-120%);
+  animation: shine 3.2s ease-in-out infinite;
+  pointer-events:none;
+}
+
+@keyframes shine{
+  0%,60%{ transform: translateX(-120%); }
+  100%{ transform: translateX(120%); }
+}
+
+.main-logo{
+  width:78px;
+  height:auto;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+}
+
+h1{
+  margin:0;
+  font-size:22px;
+  letter-spacing:.6px;
+  font-weight:850;
+}
+
+.tagline{
+  margin:0 0 18px 0;
+  font-size:12.5px;
+  color:var(--muted);
+  letter-spacing:.35px;
+}
+
+.divider{
+  height:1px;
+  width:100%;
+  margin:14px 0 18px;
+  background: linear-gradient(90deg, transparent, rgba(247,231,167,.45), rgba(255,255,255,.12), transparent);
+  opacity:.9;
+}
+
+.menu{
+  display:grid;
+  gap:12px;
+}
+
+/* Premium buttons */
+.menu-btn{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  width:100%;
+  padding:14px 14px 14px 16px;
+  border-radius:16px;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+
+  color:var(--text);
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+  position:relative;
+  overflow:hidden;
+}
+
+.menu-btn .left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.icon{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+}
+
+.label{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  text-align:left;
+  min-width:0;
+}
+
+.label strong{
+  font-size:14.5px;
+  letter-spacing:.2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.label span{
+  margin-top:2px;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.chev{
+  opacity:.9;
+  font-weight:900;
+  transform: translateX(0);
+  transition: transform .18s ease;
+}
+
+/* glossy sweep */
 .menu-btn::after{
   content:"";
   position:absolute;
-  width:100%;
-  height:100%;
-  top:0;
-  left:-100%;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.3),transparent);
-  transition:.4s;
+  inset:0;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,.22), transparent);
+  transform: translateX(-120%);
+  transition: transform .55s ease;
+  pointer-events:none;
 }
 
-.menu-btn:hover::after{
-  left:100%;
-}
-
+.menu-btn:hover::after{ transform: translateX(120%); }
 .menu-btn:hover{
-  transform:translateY(-3px);
-  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(0,0,0,.35);
+  border-color: rgba(247,231,167,.22);
+}
+.menu-btn:hover .chev{ transform: translateX(3px); }
+
+.menu-btn:active{
+  transform: translateY(0px);
 }
 
-.blue{
-  background:var(--blue);
+/* Accent styles per button */
+.menu-btn.primary{
+  background: linear-gradient(135deg, rgba(37,99,235,.92), rgba(30,64,175,.92));
+  border-color: rgba(37,99,235,.55);
+}
+.menu-btn.primary .icon{
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.22);
+}
+.menu-btn.secondary{
+  background: linear-gradient(135deg, rgba(17,24,39,.92), rgba(11,18,32,.92));
+  border-color: rgba(247,231,167,.20);
+}
+.menu-btn.secondary .icon{
+  background: rgba(215,180,90,.12);
+  border-color: rgba(247,231,167,.25);
 }
 
-.blue:hover{
-  background:var(--blueHover);
+/* footer */
+.note{
+  margin-top:16px;
+  font-size:11.5px;
+  color:rgba(182,192,209,.95);
 }
 
-.dark{
-  background:var(--dark);
-}
-
-.dark:hover{
-  background:var(--darkHover);
+/* Mobile tweaks */
+@media (max-width:420px){
+  .container{padding:28px 18px 18px}
+  .logoWrap{width:104px;height:104px}
+  .main-logo{width:72px}
+  h1{font-size:20px}
 }
 </style>
 </head>
@@ -106,17 +317,41 @@ h1{
 
 <div class="container">
 
-  <img src="logo.png" class="main-logo" alt="Torre KBR Logo">
+  <div class="brand">
+    <div class="logoWrap" aria-hidden="true">
+      <img src="logo.png" class="main-logo" alt="Torre KBR Logo">
+    </div>
+    <h1>Torre KBR Admin</h1>
+    <p class="tagline">Luxury booking management • Fast access</p>
+  </div>
 
-  <h1>Torre KBR Admin</h1>
+  <div class="divider"></div>
 
-  <a href="calendar.html" class="menu-btn blue">
-    Booking Calendar
-  </a>
+  <div class="menu">
+    <a href="calendar.html" class="menu-btn primary">
+      <div class="left">
+        <div class="icon" aria-hidden="true">📅</div>
+        <div class="label">
+          <strong>Booking Calendar</strong>
+          <span>Set availability per date</span>
+        </div>
+      </div>
+      <div class="chev" aria-hidden="true">›</div>
+    </a>
 
-  <a href="guests.html" class="menu-btn dark">
-    Guests Information
-  </a>
+    <a href="guests.html" class="menu-btn secondary">
+      <div class="left">
+        <div class="icon" aria-hidden="true">🧾</div>
+        <div class="label">
+          <strong>Guests Information</strong>
+          <span>Save guest details & payments</span>
+        </div>
+      </div>
+      <div class="chev" aria-hidden="true">›</div>
+    </a>
+  </div>
+
+  <div class="note">Tip: Use Export inside pages to back up your data.</div>
 
 </div>
 
