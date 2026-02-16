@@ -519,15 +519,12 @@
 
   // ===== Google Apps Script Web App =====
   const API_URL = "https://script.google.com/macros/s/AKfycbxhgciD9s7x4pPtyGffjzPhLED_DQ0eONXj_iVsKoQu-meszK9O6JRNyQT0YKvBqxg1xQ/exec";
-  const API_KEY = "kbr_super_secret_2026";         // must match Code.gs
-  const TAB_NAME = "guests";                        // must match your Sheet tab name in Google Sheets
-  const CLOUD_KEY = STORAGE_KEY;                    // unique row key in the tab
+  const API_KEY = "kbr_super_secret_2026";
+  const TAB_NAME = "guests";
+  const CLOUD_KEY = STORAGE_KEY;
 
   const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
-  const MONTHS = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
   let data = {}; // loaded on init
 
@@ -569,34 +566,40 @@
 
   function setSync(msg){ if (syncStatus) syncStatus.textContent = msg; }
 
-  // ===== Cloud API calls =====
-  async function apiGet(tab, key){
-    const url = `${API_URL}?key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(key)}`;
-    const res = await fetch(url, { method:"GET" });
-    if (!res.ok) throw new Error("GET failed");
-    const out = await res.json();
-    return out?.data ?? null;
-  }
-
-  async function apiSet(tab, key, obj){
-    const res = await fetch(API_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ key: API_KEY, tab, k: key, data: obj })
+  // ===== JSONP Helper (CORS-safe) =====
+  function jsonp(url){
+    return new Promise((resolve, reject) => {
+      const cb = "cb_" + Math.random().toString(36).slice(2);
+      const s = document.createElement("script");
+      const cleanup = () => {
+        try { delete window[cb]; } catch {}
+        s.remove();
+      };
+      window[cb] = (res) => { cleanup(); resolve(res); };
+      s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
+      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb);
+      document.body.appendChild(s);
     });
-    if (!res.ok) throw new Error("POST failed");
-    return res.json();
   }
 
-  async function loadDataCloudFirst(){
-    // Cloud first
-    try{
-      const cloud = await apiGet(TAB_NAME, CLOUD_KEY);
-      if (cloud && typeof cloud === "object") return cloud;
-    }catch(e){
-      console.warn("Cloud load failed; will use local cache.", e);
-    }
-    // Local fallback
+  // ===== Cloud API via JSONP (GET op=get/op=set) =====
+  async function apiGet(tab, k){
+    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}`;
+    const out = await jsonp(url);
+    if (!out || !out.ok) throw new Error(out?.error || "GET failed");
+    return out.data ?? null;
+  }
+
+  async function apiSet(tab, k, obj){
+    const raw = encodeURIComponent(JSON.stringify(obj));
+    const url = `${API_URL}?op=set&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&data=${raw}`;
+    const out = await jsonp(url);
+    if (!out || !out.ok) throw new Error(out?.error || "SET failed");
+    return out;
+  }
+
+  // ===== Load strategy: local first (fast), then cloud override (sync) =====
+  function loadLocal(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : {};
@@ -605,18 +608,45 @@
     }
   }
 
-  // Debounced persist (prevents spamming your Apps Script)
+  async function loadCloud(){
+    return await apiGet(TAB_NAME, CLOUD_KEY);
+  }
+
+  async function initLoad(){
+    // 1) show local immediately
+    data = loadLocal();
+    render();
+
+    // 2) fetch cloud and override if present
+    try{
+      setSync("Loading from Google Sheets…");
+      const cloud = await loadCloud();
+      if (cloud && typeof cloud === "object"){
+        data = cloud;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+        render();
+        setSync("Loaded from Google Sheets (sync across devices).");
+      } else {
+        setSync("No cloud data yet. Your next save will create it in Google Sheets.");
+      }
+    }catch(e){
+      console.warn("Cloud load failed; using local.", e);
+      setSync("Offline: using local cache. (Cloud load failed)");
+    }
+  }
+
+  // Debounced persist (prevents spamming Apps Script)
   let __persistTimer = null;
   function persistSoon(){
     clearTimeout(__persistTimer);
-    __persistTimer = setTimeout(() => persist(), 600);
+    __persistTimer = setTimeout(() => { persist().catch(()=>{}); }, 700);
   }
 
   async function persist(){
-    // local cache always
+    // local always
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
 
-    // cloud save
+    // cloud
     try{
       setSync("Saving to Google Sheets…");
       await apiSet(TAB_NAME, CLOUD_KEY, data);
@@ -1091,9 +1121,7 @@
   // ===== Init =====
   (async function init(){
     setEditMode(false);
-    setSync("Loading from Google Sheets…");
-    data = await loadDataCloudFirst();
-    render();
+    await initLoad();
     setSync("Ready. Auto-saves sync across devices (Google Sheets).");
   })();
 </script>
