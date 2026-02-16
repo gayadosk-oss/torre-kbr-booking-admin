@@ -1,110 +1,124 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Torre KBR Admin</title>
 
 <style>
+:root{
+  --blue:#2563eb;
+  --blueHover:#1e40af;
+  --dark:#374151;
+  --darkHover:#111827;
+}
+
+*{box-sizing:border-box}
+
 body{
   margin:0;
-  font-family:Arial, sans-serif;
-  background:#ffffff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:linear-gradient(135deg,#f3f4f6,#e5e7eb);
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   height:100vh;
 }
 
 .container{
   text-align:center;
-}
-
-h1{
-  margin-bottom:40px;
-  font-size:32px;
-}
-
-button{
-  display:block;
-  width:280px;
-  padding:18px;
-  margin:20px auto;
-  font-size:18px;
-  border-radius:14px;
-  border:1px solid #e5e7eb;
-  background:#ffffff;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-button:hover{
-  background:#f3f4f6;
-}
-.main-container{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  gap:20px;
+  padding:40px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(14px);
+  box-shadow:0 20px 40px rgba(0,0,0,0.08);
+  width:360px;
 }
 
 .main-logo{
-  width:230px;   /* Bigger but still clean */
-  max-width:75%;
+  width:240px;
+  max-width:80%;
   height:auto;
-  margin-bottom:15px;
+  margin-bottom:20px;
+  filter:drop-shadow(0 10px 15px rgba(0,0,0,0.15));
 }
 
 h1{
-  margin:0;
-  font-size:28px;
-  font-weight:700;
+  margin:0 0 30px 0;
+  font-size:26px;
+  letter-spacing:.5px;
 }
 
 .menu-btn{
   display:block;
-  width:280px;
-  padding:14px;
+  width:100%;
+  padding:15px;
   border-radius:14px;
   text-decoration:none;
   font-weight:600;
-  transition:0.2s ease;
-  text-align:center;
+  font-size:15px;
+  margin:12px 0;
+  transition:all .25s ease;
   color:#fff;
+  position:relative;
+  overflow:hidden;
 }
 
-.menu-btn.blue{
-  background:#2563eb;   /* Professional blue */
+.menu-btn::after{
+  content:"";
+  position:absolute;
+  width:100%;
+  height:100%;
+  top:0;
+  left:-100%;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.3),transparent);
+  transition:.4s;
 }
 
-.menu-btn.blue:hover{
-  background:#1e40af;
+.menu-btn:hover::after{
+  left:100%;
 }
 
-.menu-btn.dark{
-  background:#374151;   /* Dark gray */
+.menu-btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
 }
 
-.menu-btn.dark:hover{
-  background:#111827;
+.blue{
+  background:var(--blue);
 }
 
+.blue:hover{
+  background:var(--blueHover);
+}
+
+.dark{
+  background:var(--dark);
+}
+
+.dark:hover{
+  background:var(--darkHover);
+}
 </style>
 </head>
 
 <body>
-<div class="main-container">
 
-  <img src="logo.png" alt="Torre KBR Logo" class="main-logo">
+<div class="container">
+
+  <img src="logo.png" class="main-logo" alt="Torre KBR Logo">
 
   <h1>Torre KBR Admin</h1>
 
- <a href="calendar.html" class="menu-btn blue">Booking Calendar</a>
-<a href="guests.html" class="menu-btn dark">Guests Information</a>
+  <a href="calendar.html" class="menu-btn blue">
+    Booking Calendar
+  </a>
+
+  <a href="guests.html" class="menu-btn dark">
+    Guests Information
+  </a>
 
 </div>
+
 </body>
 </html>
