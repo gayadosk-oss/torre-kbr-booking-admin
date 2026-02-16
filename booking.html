@@ -1,169 +1,531 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Booking Calendar 2026</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Torre KBR • Booking Calendar (2026)</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --shadow:0 10px 28px rgba(17,24,39,.08);
+      --accent:#2563eb;
 
-<style>
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#ffffff;
-}
+      --availBg:#dcfce7; --availText:#166534; --availBorder:#bbf7d0;
+      --bookBg:#fee2e2; --bookText:#991b1b; --bookBorder:#fecaca;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    header{
+      padding:18px 16px 10px;
+      text-align:center;
+      border-bottom:1px solid var(--border);
+      background:#fff;
+      position:sticky; top:0; z-index:5;
+    }
+    h1{margin:0 0 6px; font-size:22px; letter-spacing:.2px}
+    .sub{margin:0; color:var(--muted); font-size:13px}
 
-header{
-  padding:20px;
-  text-align:center;
-  font-size:24px;
-  font-weight:bold;
-}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow);
+    }
+    .left,.right{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    select,button,input{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:14px;
+      background:#fff;
+      color:var(--text);
+    }
+    button{cursor:pointer}
+    button.primary{background:var(--accent); color:#fff; border-color:transparent}
+    button.ghost{background:#fff}
+    button.danger{background:#fff; border-color:#fca5a5; color:#b91c1c}
 
-table{
-  border-collapse:collapse;
-  width:100%;
-  font-size:14px;
-}
+    .grid{
+      margin-top:14px;
+      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow);
+    }
+    .monthTitle{display:flex; align-items:baseline; justify-content:space-between; padding:6px 6px 10px}
+    .monthTitle strong{font-size:18px}
+    .monthTitle span{color:var(--muted); font-size:13px}
 
-th, td{
-  border:1px solid #e5e7eb;
-  padding:6px;
-  text-align:center;
-}
+    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; padding:0 6px 8px}
+    .dow div{color:var(--muted); font-weight:700; font-size:12px; text-transform:uppercase}
 
-th{
-  background:#1e3a8a;
-  color:white;
-  position:sticky;
-  top:0;
-}
+    .days{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; padding:0 6px 6px}
+    .day{
+      min-height:92px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      display:flex; flex-direction:column; gap:8px;
+      transition:transform .05s ease, box-shadow .05s ease;
+      position:relative;
+      outline:none;
+    }
+    .day:hover{transform:translateY(-1px); box-shadow:0 8px 16px rgba(17,24,39,.06)}
+    .day.muted{background:#fafafa; color:#9ca3af}
+    .date{font-weight:800; font-size:13px}
+    .miniRow{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto}
+    .pill{
+      font-size:11px; font-weight:800;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid transparent;
+      line-height:1.1;
+    }
+    .pill.av{background:var(--availBg); color:var(--availText); border-color:var(--availBorder)}
+    .pill.bk{background:var(--bookBg); color:var(--bookText); border-color:var(--bookBorder)}
+    .hint{font-size:11px; color:var(--muted)}
 
-.dateCol{
-  font-weight:bold;
-  background:#f3f4f6;
-}
+    /* Modal */
+    .modalOverlay{
+      position:fixed; inset:0; background:rgba(17,24,39,.55);
+      display:none; align-items:center; justify-content:center; padding:16px;
+      z-index:50;
+    }
+    .modal{
+      width:min(820px, 100%);
+      background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+      border:1px solid var(--border);
+      padding:14px;
+    }
+    .modalHeader{display:flex; justify-content:space-between; align-items:center; gap:10px}
+    .modalHeader strong{font-size:16px}
+    .modalHeader button{padding:8px 10px}
 
-select{
-  width:100%;
-  padding:4px;
-  border-radius:6px;
-  border:1px solid #e5e7eb;
-  font-weight:bold;
-}
+    .modalBody{margin-top:12px; display:grid; gap:12px}
+    .unitGrid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:10px;
+    }
+    .unitCard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .unitName{font-weight:900; font-size:13px}
+    .unitSelect{
+      width:140px;
+      padding:8px 10px;
+      border-radius:12px;
+      font-weight:800;
+    }
+    .unitSelect.av{background:var(--availBg); color:var(--availText); border-color:var(--availBorder)}
+    .unitSelect.bk{background:var(--bookBg); color:var(--bookText); border-color:var(--bookBorder)}
 
-.available{background:#dcfce7;color:#166534;}
-.booked{background:#fee2e2;color:#991b1b;}
-.pending{background:#fef3c7;color:#92400e;}
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;
+      border-top:1px solid var(--border);
+      padding-top:12px;
+    }
+    .actionsLeft,.actionsRight{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .small{font-size:12px; color:var(--muted)}
+    .footerNote{margin-top:10px; color:var(--muted); font-size:12px; text-align:center}
 
-.backBtn{
-  margin:15px;
-  padding:10px 20px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  background:#fff;
-  cursor:pointer;
-}
-</style>
+    @media (max-width:860px){
+      .unitGrid{grid-template-columns:repeat(2, minmax(0,1fr))}
+    }
+    @media (max-width:520px){
+      .day{min-height:82px}
+      .unitGrid{grid-template-columns:1fr}
+      .unitSelect{width:160px}
+    }
+  </style>
 </head>
-
 <body>
+<header>
+  <h1>Torre KBR • Booking Calendar</h1>
+  <p class="sub">2026 • Click a date → set each unit to <b>Available</b> or <b>Booked</b>. Auto-saves.</p>
+</header>
 
-<header>Booking Calendar – 2026</header>
+<div class="wrap">
+  <div class="toolbar">
+    <div class="left">
+      <span class="small"><b>Month</b></span>
+      <select id="monthSelect"></select>
+      <button class="ghost" id="prevBtn">◀ Prev</button>
+      <button class="ghost" id="nextBtn">Next ▶</button>
+      <button class="ghost" id="todayBtn">Go to Jan 2026</button>
+    </div>
+    <div class="right">
+      <button class="ghost" id="exportBtn">Export</button>
+      <button class="ghost" id="importBtn">Import</button>
+      <button class="danger" id="clearMonthBtn">Clear month</button>
+    </div>
+  </div>
 
-<button class="backBtn" onclick="location.href='index.html'">← Back</button>
+  <div class="grid">
+    <div class="monthTitle">
+      <strong id="monthTitle"></strong>
+      <span id="monthMeta"></span>
+    </div>
 
-<div style="overflow:auto; padding:15px;">
-<table id="calendarTable">
-<thead>
-<tr>
-<th>DATE</th>
-<th>D1</th>
-<th>D2</th>
-<th>C1</th>
-<th>C2</th>
-<th>C3</th>
-<th>B1</th>
-<th>B2</th>
-<th>A1</th>
-<th>A2</th>
-<th>ROOM A</th>
-<th>ROOM B</th>
-<th>ROOM C</th>
-<th>ROOM D</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+    <div class="dow">
+      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+
+    <div class="days" id="daysGrid"></div>
+  </div>
+
+  <div class="footerNote">Tip: Use Export to back up / transfer to another device.</div>
+</div>
+
+<!-- Modal -->
+<div class="modalOverlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modalHeader">
+      <strong id="modalTitle">Edit</strong>
+      <button class="ghost" id="closeModalBtn">✕</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="small" id="modalSub"></div>
+
+      <div class="unitGrid" id="unitGrid"></div>
+
+      <div class="actions">
+        <div class="actionsLeft">
+          <button class="ghost" id="setAllAvailableBtn">Set all Available</button>
+          <button class="ghost" id="setAllBookedBtn">Set all Booked</button>
+        </div>
+        <div class="actionsRight">
+          <button class="danger" id="deleteDateBtn">Clear this date</button>
+          <button class="ghost" id="cancelBtn">Close</button>
+          <button class="primary" id="saveBtn">Save</button>
+        </div>
+      </div>
+
+      <div class="small">Saved locally in this browser (no login needed).</div>
+    </div>
+  </div>
 </div>
 
 <script>
-const units = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C","ROOM D"];
-const tbody = document.querySelector("tbody");
+  // ====== Config ======
+  const YEAR = 2026;
+  const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
 
-const STORAGE_KEY = "torreBooking2026";
+  // Units (Room D removed)
+  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
 
-let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  // data shape:
+  // {
+  //   "2026-02-14": { "D1":"available", "D2":"booked", ... },
+  //   ...
+  // }
+  let data = loadData();
 
-function saveData(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
-}
+  // ====== Elements ======
+  const monthSelect = document.getElementById("monthSelect");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const todayBtn = document.getElementById("todayBtn");
+  const monthTitle = document.getElementById("monthTitle");
+  const monthMeta = document.getElementById("monthMeta");
+  const daysGrid = document.getElementById("daysGrid");
 
-function createDropdown(date, unit){
-  const key = date+"_"+unit;
-  const select = document.createElement("select");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalSub = document.getElementById("modalSub");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const deleteDateBtn = document.getElementById("deleteDateBtn");
+  const setAllAvailableBtn = document.getElementById("setAllAvailableBtn");
+  const setAllBookedBtn = document.getElementById("setAllBookedBtn");
+  const unitGrid = document.getElementById("unitGrid");
 
-  ["AVAILABLE","BOOKED","PENDING"].forEach(status=>{
+  const exportBtn = document.getElementById("exportBtn");
+  const importBtn = document.getElementById("importBtn");
+  const clearMonthBtn = document.getElementById("clearMonthBtn");
+
+  const MONTHS = [
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December"
+  ];
+
+  // ====== Month selector ======
+  MONTHS.forEach((m, idx) => {
     const opt = document.createElement("option");
-    opt.value=status;
-    opt.text=status;
-    select.appendChild(opt);
+    opt.value = idx;
+    opt.textContent = `${m} ${YEAR}`;
+    monthSelect.appendChild(opt);
   });
 
-  select.value = savedData[key] || "AVAILABLE";
-  updateColor(select);
+  let currentMonth = 0; // default Jan
+  monthSelect.value = String(currentMonth);
 
-  select.onchange = ()=>{
-    savedData[key] = select.value;
-    saveData();
-    updateColor(select);
-  };
+  monthSelect.addEventListener("change", () => {
+    currentMonth = Number(monthSelect.value);
+    render();
+  });
 
-  return select;
-}
+  prevBtn.addEventListener("click", () => {
+    currentMonth = Math.max(0, currentMonth - 1);
+    monthSelect.value = String(currentMonth);
+    render();
+  });
 
-function updateColor(select){
-  select.classList.remove("available","booked","pending");
-  if(select.value==="AVAILABLE") select.classList.add("available");
-  if(select.value==="BOOKED") select.classList.add("booked");
-  if(select.value==="PENDING") select.classList.add("pending");
-}
+  nextBtn.addEventListener("click", () => {
+    currentMonth = Math.min(11, currentMonth + 1);
+    monthSelect.value = String(currentMonth);
+    render();
+  });
 
-function generateCalendar(){
-  const start = new Date(2026,0,1);
-  const end = new Date(2026,11,31);
+  todayBtn.addEventListener("click", () => {
+    currentMonth = 0;
+    monthSelect.value = "0";
+    render();
+  });
 
-  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
-    const row = document.createElement("tr");
+  // ====== Calendar render ======
+  function render() {
+    const first = new Date(YEAR, currentMonth, 1);
+    const last = new Date(YEAR, currentMonth + 1, 0);
+    const firstDow = first.getDay();
+    const daysInMonth = last.getDate();
 
-    const dateStr = d.toLocaleDateString("en-US",{month:"long", day:"numeric"});
-    const dateCell = document.createElement("td");
-    dateCell.textContent = dateStr;
-    dateCell.className="dateCol";
-    row.appendChild(dateCell);
+    monthTitle.textContent = `${MONTHS[currentMonth]} ${YEAR}`;
+    monthMeta.textContent = `Click any date to edit unit availability`;
 
-    units.forEach(unit=>{
-      const td = document.createElement("td");
-      td.appendChild(createDropdown(dateStr,unit));
-      row.appendChild(td);
-    });
+    daysGrid.innerHTML = "";
 
-    tbody.appendChild(row);
+    for (let i = 0; i < firstDow; i++) {
+      const blank = document.createElement("div");
+      blank.className = "day muted";
+      blank.innerHTML = `<div class="date">&nbsp;</div>`;
+      daysGrid.appendChild(blank);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = toISODate(YEAR, currentMonth + 1, d);
+      const unitMap = getDateMap(dateStr);
+
+      const counts = countStatus(unitMap);
+      const el = document.createElement("div");
+      el.className = "day";
+      el.setAttribute("role","button");
+      el.setAttribute("tabindex","0");
+
+      el.addEventListener("click", () => openModal(dateStr));
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") openModal(dateStr);
+      });
+
+      el.innerHTML = `
+        <div class="date">${MONTHS[currentMonth].slice(0,3)} ${d}</div>
+        <div class="hint">${counts.booked} booked • ${counts.available} available</div>
+        <div class="miniRow">
+          <span class="pill bk">${counts.booked} Booked</span>
+          <span class="pill av">${counts.available} Available</span>
+        </div>
+      `;
+
+      daysGrid.appendChild(el);
+    }
   }
-}
 
-generateCalendar();
+  function getDateMap(dateStr){
+    // If no record, default everything to available (but do NOT store until user saves)
+    const existing = data[dateStr];
+    if (existing && typeof existing === "object") {
+      // ensure all units exist
+      const safe = {};
+      for (const u of UNITS) safe[u] = (existing[u] === "booked") ? "booked" : "available";
+      return safe;
+    }
+    const fresh = {};
+    for (const u of UNITS) fresh[u] = "available";
+    return fresh;
+  }
+
+  function countStatus(map){
+    let booked = 0, available = 0;
+    for (const u of UNITS){
+      if (map[u] === "booked") booked++;
+      else available++;
+    }
+    return { booked, available };
+  }
+
+  // ====== Modal (edit per date) ======
+  let activeDate = null;
+  let workingMap = null;
+
+  function openModal(dateStr){
+    activeDate = dateStr;
+    workingMap = getDateMap(dateStr);
+
+    modalTitle.textContent = `Edit Units • ${dateStr}`;
+    modalSub.textContent = `Tap each unit and set it to Available or Booked.`;
+
+    unitGrid.innerHTML = "";
+    for (const unit of UNITS){
+      const card = document.createElement("div");
+      card.className = "unitCard";
+
+      const name = document.createElement("div");
+      name.className = "unitName";
+      name.textContent = unit;
+
+      const select = document.createElement("select");
+      select.className = "unitSelect";
+      select.innerHTML = `
+        <option value="available">Available</option>
+        <option value="booked">Booked</option>
+      `;
+      select.value = workingMap[unit] || "available";
+      applySelectStyle(select);
+
+      select.addEventListener("change", () => {
+        workingMap[unit] = select.value;
+        applySelectStyle(select);
+      });
+
+      card.appendChild(name);
+      card.appendChild(select);
+      unitGrid.appendChild(card);
+    }
+
+    modalOverlay.style.display = "flex";
+  }
+
+  function applySelectStyle(sel){
+    sel.classList.remove("av","bk");
+    if (sel.value === "booked") sel.classList.add("bk");
+    else sel.classList.add("av");
+  }
+
+  function closeModal(){
+    modalOverlay.style.display = "none";
+    activeDate = null;
+    workingMap = null;
+  }
+
+  closeModalBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  setAllAvailableBtn.addEventListener("click", () => {
+    if (!workingMap) return;
+    for (const u of UNITS) workingMap[u] = "available";
+    // refresh select UI
+    [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="available"; applySelectStyle(s); });
+  });
+
+  setAllBookedBtn.addEventListener("click", () => {
+    if (!workingMap) return;
+    for (const u of UNITS) workingMap[u] = "booked";
+    [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="booked"; applySelectStyle(s); });
+  });
+
+  saveBtn.addEventListener("click", () => {
+    if (!activeDate || !workingMap) return;
+    // store
+    data[activeDate] = { ...workingMap };
+    persist();
+    render();
+    closeModal();
+  });
+
+  deleteDateBtn.addEventListener("click", () => {
+    if (!activeDate) return;
+    delete data[activeDate]; // back to default (all available)
+    persist();
+    render();
+    closeModal();
+  });
+
+  // ====== Export / Import / Clear Month ======
+  exportBtn.addEventListener("click", () => {
+    const payload = JSON.stringify({ year: YEAR, units: UNITS, data }, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `torre-kbr-availability-${YEAR}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener("click", async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      try{
+        const parsed = JSON.parse(text);
+        if (!parsed || typeof parsed !== "object" || !parsed.data) {
+          alert("Invalid file.");
+          return;
+        }
+        data = parsed.data;
+        persist();
+        render();
+        alert("Imported successfully!");
+      }catch{
+        alert("Invalid JSON file.");
+      }
+    };
+    input.click();
+  });
+
+  clearMonthBtn.addEventListener("click", () => {
+    const m = currentMonth + 1;
+    const prefix = `${YEAR}-${String(m).padStart(2,"0")}-`;
+    const keys = Object.keys(data).filter(k => k.startsWith(prefix));
+    if (!keys.length) return alert("Nothing to clear for this month.");
+    if (!confirm(`Clear all saved entries for ${MONTHS[currentMonth]} ${YEAR}?`)) return;
+    keys.forEach(k => delete data[k]);
+    persist();
+    render();
+  });
+
+  // ====== Storage helpers ======
+  function loadData(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch{
+      return {};
+    }
+  }
+  function persist(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+  function toISODate(y,m,d){
+    return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  }
+
+  // init
+  render();
 </script>
-
 </body>
 </html>
-
