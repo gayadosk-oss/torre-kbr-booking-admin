@@ -79,13 +79,17 @@ body{
   margin-bottom:22px;
 }
 
-/* 🔥 MUCH BIGGER LOGO */
+/* ✅ LOGO FITS PERFECTLY INSIDE CURVED SQUARE */
 .logoWrap{
-  width:180px;       /* increased */
-  height:180px;      /* increased */
+  width:180px;
+  height:180px;
   border-radius:30px;
-  display:grid;
-  place-items:center;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:18px; /* controls spacing inside */
 
   background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
   border:1px solid rgba(255,255,255,.18);
@@ -96,8 +100,9 @@ body{
 }
 
 .main-logo{
-  width:140px;       /* increased */
-  height:auto;
+  width:100%;
+  height:100%;
+  object-fit:contain; /* ✅ keeps aspect ratio + fits box */
   filter: drop-shadow(0 16px 28px rgba(0,0,0,.45));
 }
 
@@ -189,8 +194,11 @@ h1{
 
 /* 📱 Mobile scaling */
 @media (max-width:420px){
-  .logoWrap{width:150px;height:150px}
-  .main-logo{width:115px}
+  .logoWrap{
+    width:150px;
+    height:150px;
+    padding:14px;
+  }
   h1{font-size:21px}
 }
 </style>
