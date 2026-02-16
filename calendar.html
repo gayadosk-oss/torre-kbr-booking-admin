@@ -24,15 +24,37 @@
       background:var(--bg);
       color:var(--text);
     }
+
+    /* Header alignment (clean + responsive) */
     header{
-      padding:18px 16px 10px;
-      text-align:center;
+      padding:16px 16px 12px;
       border-bottom:1px solid var(--border);
       background:#fff;
       position:sticky; top:0; z-index:5;
     }
-    h1{margin:0 0 6px; font-size:22px; letter-spacing:.2px}
-    .sub{margin:0; color:var(--muted); font-size:13px}
+    .headerInner{
+      max-width:1100px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    h1{margin:0; font-size:20px; letter-spacing:.2px}
+    .sub{margin:4px 0 0; color:var(--muted); font-size:13px}
+    .mainLink{
+      text-decoration:none;
+      background:#111827;
+      color:#ffffff;
+      padding:8px 16px;
+      border-radius:10px;
+      font-weight:700;
+      font-size:14px;
+      white-space:nowrap;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
 
     .wrap{max-width:1100px;margin:0 auto;padding:16px}
     .toolbar{
@@ -47,6 +69,7 @@
       font-size:14px;
       background:#fff;
       color:var(--text);
+      min-height:40px;
     }
     button{cursor:pointer}
     button.primary{background:var(--accent); color:#fff; border-color:transparent}
@@ -57,14 +80,21 @@
       margin-top:14px;
       background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow);
     }
-    .monthTitle{display:flex; align-items:baseline; justify-content:space-between; padding:6px 6px 10px}
+    .monthTitle{display:flex; align-items:baseline; justify-content:space-between; padding:6px 6px 10px; gap:10px; flex-wrap:wrap}
     .monthTitle strong{font-size:18px}
     .monthTitle span{color:var(--muted); font-size:13px}
 
     .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; padding:0 6px 8px}
-    .dow div{color:var(--muted); font-weight:700; font-size:12px; text-transform:uppercase}
+    .dow div{color:var(--muted); font-weight:800; font-size:12px; text-transform:uppercase}
 
-    .days{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; padding:0 6px 6px}
+    /* Proper calendar alignment */
+    .days{
+      display:grid;
+      grid-template-columns:repeat(7, minmax(0,1fr));
+      gap:10px;
+      padding:0 6px 6px;
+      align-items:stretch;
+    }
     .day{
       min-height:92px;
       border:1px solid var(--border);
@@ -78,10 +108,10 @@
     }
     .day:hover{transform:translateY(-1px); box-shadow:0 8px 16px rgba(17,24,39,.06)}
     .day.muted{background:#fafafa; color:#9ca3af}
-    .date{font-weight:800; font-size:13px}
+    .date{font-weight:900; font-size:13px}
     .miniRow{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto}
     .pill{
-      font-size:11px; font-weight:800;
+      font-size:11px; font-weight:900;
       padding:3px 8px;
       border-radius:999px;
       border:1px solid transparent;
@@ -91,19 +121,58 @@
     .pill.bk{background:var(--bookBg); color:var(--bookText); border-color:var(--bookBorder)}
     .hint{font-size:11px; color:var(--muted)}
 
-    /* Modal */
+    /* ===== iOS-Safe Scrollable Modal ===== */
     .modalOverlay{
-      position:fixed; inset:0; background:rgba(17,24,39,.55);
-      display:none; align-items:center; justify-content:center; padding:16px;
+      position:fixed;
+      inset:0;
+      background:rgba(17,24,39,.55);
+      display:none;
+
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+
+      padding:16px;
       z-index:50;
+
+      /* IMPORTANT: don't vertically center on iOS */
+      align-items:flex-start;
+      justify-content:center;
     }
+
     .modal{
       width:min(820px, 100%);
-      background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
       border:1px solid var(--border);
+
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+
+      margin:0 auto;
       padding:14px;
+      padding-bottom:calc(14px + env(safe-area-inset-bottom));
     }
-    .modalHeader{display:flex; justify-content:space-between; align-items:center; gap:10px}
+
+    /* Sticky header inside modal (better on phone) */
+    .modalHeader{
+      position:sticky;
+      top:0;
+      background:#fff;
+      z-index:5;
+
+      margin:-14px -14px 0;
+      padding:14px;
+      border-bottom:1px solid var(--border);
+      border-top-left-radius:16px;
+      border-top-right-radius:16px;
+
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
     .modalHeader strong{font-size:16px}
     .modalHeader button{padding:8px 10px}
 
@@ -123,12 +192,14 @@
       align-items:center;
       justify-content:space-between;
     }
-    .unitName{font-weight:900; font-size:13px}
+    .unitName{font-weight:950; font-size:13px}
     .unitSelect{
       width:140px;
       padding:8px 10px;
       border-radius:12px;
-      font-weight:800;
+      font-weight:900;
+      border:1px solid var(--border);
+      background:#fff;
     }
     .unitSelect.av{background:var(--availBg); color:var(--availText); border-color:var(--availBorder)}
     .unitSelect.bk{background:var(--bookBg); color:var(--bookText); border-color:var(--bookBorder)}
@@ -145,57 +216,46 @@
     @media (max-width:860px){
       .unitGrid{grid-template-columns:repeat(2, minmax(0,1fr))}
     }
+    @media (max-width:720px){
+      /* Phone-friendly calendar: 2 columns */
+      .dow{display:none}
+      .days{grid-template-columns:repeat(2, minmax(0,1fr))}
+    }
     @media (max-width:520px){
       .day{min-height:82px}
       .unitGrid{grid-template-columns:1fr}
       .unitSelect{width:160px}
+
+      .headerInner{flex-direction:column; align-items:flex-start}
+      .mainLink{align-self:flex-end}
     }
   </style>
 </head>
 <body>
+
 <header>
-  <div style="display:flex;justify-content:space-between;align-items:center;max-width:1100px;margin:0 auto;">
-    
+  <div class="headerInner">
     <div style="text-align:left;">
-      <h1 style="margin:0;font-size:20px;">
-        Torre KBR • Booking Calendar
-      </h1>
-      <p class="sub" style="margin:4px 0 0 0;">
-        2026 • Click a date → Set units to Available or Booked
-      </p>
+      <h1>Torre KBR • Booking Calendar</h1>
+      <p class="sub">2026 • Click a date → Set units to Available or Booked</p>
     </div>
-
-    <div>
-      <a href="index.html" style="
-        text-decoration:none;
-        background:#111827;
-        color:#ffffff;
-        padding:8px 16px;
-        border-radius:10px;
-        font-weight:600;
-        font-size:14px;
-      ">
-        ⬅ Main Menu
-      </a>
-    </div>
-
+    <a class="mainLink" href="index.html">⬅ Main Menu</a>
   </div>
 </header>
-
 
 <div class="wrap">
   <div class="toolbar">
     <div class="left">
       <span class="small"><b>Month</b></span>
       <select id="monthSelect"></select>
-      <button class="ghost" id="prevBtn">◀ Prev</button>
-      <button class="ghost" id="nextBtn">Next ▶</button>
-      <button class="ghost" id="todayBtn">Go to Jan 2026</button>
+      <button class="ghost" id="prevBtn" type="button">◀ Prev</button>
+      <button class="ghost" id="nextBtn" type="button">Next ▶</button>
+      <button class="ghost" id="todayBtn" type="button">Go to Jan 2026</button>
     </div>
     <div class="right">
-      <button class="ghost" id="exportBtn">Export</button>
-      <button class="ghost" id="importBtn">Import</button>
-      <button class="danger" id="clearMonthBtn">Clear month</button>
+      <button class="ghost" id="exportBtn" type="button">Export</button>
+      <button class="ghost" id="importBtn" type="button">Import</button>
+      <button class="danger" id="clearMonthBtn" type="button">Clear month</button>
     </div>
   </div>
 
@@ -217,10 +277,10 @@
 
 <!-- Modal -->
 <div class="modalOverlay" id="modalOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modalHeader">
       <strong id="modalTitle">Edit</strong>
-      <button class="ghost" id="closeModalBtn">✕</button>
+      <button class="ghost" id="closeModalBtn" type="button">✕</button>
     </div>
 
     <div class="modalBody">
@@ -230,13 +290,13 @@
 
       <div class="actions">
         <div class="actionsLeft">
-          <button class="ghost" id="setAllAvailableBtn">Set all Available</button>
-          <button class="ghost" id="setAllBookedBtn">Set all Booked</button>
+          <button class="ghost" id="setAllAvailableBtn" type="button">Set all Available</button>
+          <button class="ghost" id="setAllBookedBtn" type="button">Set all Booked</button>
         </div>
         <div class="actionsRight">
-          <button class="danger" id="deleteDateBtn">Clear this date</button>
-          <button class="ghost" id="cancelBtn">Close</button>
-          <button class="primary" id="saveBtn">Save</button>
+          <button class="danger" id="deleteDateBtn" type="button">Clear this date</button>
+          <button class="ghost" id="cancelBtn" type="button">Close</button>
+          <button class="primary" id="saveBtn" type="button">Save</button>
         </div>
       </div>
 
@@ -250,15 +310,33 @@
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
 
-  // Units (Room D removed)
+  // Units
   const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
 
   // data shape:
-  // {
-  //   "2026-02-14": { "D1":"available", "D2":"booked", ... },
-  //   ...
-  // }
+  // { "2026-02-14": { "D1":"available", "D2":"booked", ... }, ... }
   let data = loadData();
+
+  // ===== iOS Background Scroll Lock =====
+  let __scrollY = 0;
+  function lockBodyScroll(){
+    __scrollY = window.scrollY || 0;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${__scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+  }
+  function unlockBodyScroll(){
+    const top = document.body.style.top;
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    const y = top ? Math.abs(parseInt(top, 10)) : __scrollY;
+    window.scrollTo(0, y || 0);
+  }
 
   // ====== Elements ======
   const monthSelect = document.getElementById("monthSelect");
@@ -335,6 +413,7 @@
 
     daysGrid.innerHTML = "";
 
+    // Leading blanks to align day-of-week properly
     for (let i = 0; i < firstDow; i++) {
       const blank = document.createElement("div");
       blank.className = "day muted";
@@ -374,7 +453,6 @@
     // If no record, default everything to available (but do NOT store until user saves)
     const existing = data[dateStr];
     if (existing && typeof existing === "object") {
-      // ensure all units exist
       const safe = {};
       for (const u of UNITS) safe[u] = (existing[u] === "booked") ? "booked" : "available";
       return safe;
@@ -432,7 +510,9 @@
       unitGrid.appendChild(card);
     }
 
+    lockBodyScroll();
     modalOverlay.style.display = "flex";
+    modalOverlay.scrollTop = 0;
   }
 
   function applySelectStyle(sel){
@@ -443,6 +523,7 @@
 
   function closeModal(){
     modalOverlay.style.display = "none";
+    unlockBodyScroll();
     activeDate = null;
     workingMap = null;
   }
@@ -453,10 +534,14 @@
     if (e.target === modalOverlay) closeModal();
   });
 
+  // ESC close
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
+  });
+
   setAllAvailableBtn.addEventListener("click", () => {
     if (!workingMap) return;
     for (const u of UNITS) workingMap[u] = "available";
-    // refresh select UI
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="available"; applySelectStyle(s); });
   });
 
@@ -468,7 +553,6 @@
 
   saveBtn.addEventListener("click", () => {
     if (!activeDate || !workingMap) return;
-    // store
     data[activeDate] = { ...workingMap };
     persist();
     render();
