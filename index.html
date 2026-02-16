@@ -7,69 +7,42 @@
 
 <style>
 :root{
-  /* Luxury palette */
-  --bg1:#0b0f17;         /* deep navy */
-  --bg2:#121a2b;         /* richer navy */
-  --card:#0f172a;        /* slate/navy */
-  --card2:#0b1224;       /* darker */
-  --text:#f8fafc;        /* near-white */
+  --bg1:#0b0f17;
+  --bg2:#121a2b;
+  --text:#f8fafc;
   --muted:#b6c0d1;
   --border:rgba(255,255,255,.10);
 
   --gold1:#f7e7a7;
   --gold2:#d7b45a;
-  --gold3:#b3892f;
-
-  --blue:#2563eb;
-  --blueHover:#1e40af;
-
-  --darkBtn:#111827;
-  --darkBtnHover:#0b1220;
 
   --shadow:0 28px 70px rgba(0,0,0,.45);
 }
 
 *{box-sizing:border-box}
-
 html,body{height:100%}
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
   color:var(--text);
 
-  /* Premium background */
   background:
     radial-gradient(1000px 600px at 15% 20%, rgba(215,180,90,.18), transparent 60%),
     radial-gradient(900px 520px at 85% 30%, rgba(37,99,235,.18), transparent 55%),
-    radial-gradient(800px 500px at 50% 85%, rgba(255,255,255,.06), transparent 60%),
     linear-gradient(135deg, var(--bg1), var(--bg2));
 
   display:flex;
   align-items:center;
   justify-content:center;
   padding:18px;
-  overflow:hidden;
-}
-
-/* subtle floating grain */
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  background-image:
-    radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
-  background-size: 26px 26px;
-  opacity:.08;
-  pointer-events:none;
-  transform: translateZ(0);
 }
 
 .container{
-  width:min(420px, 100%);
+  width:min(440px, 100%);
   text-align:center;
-
-  padding:34px 26px 26px;
-  border-radius:26px;
+  padding:40px 28px 28px;
+  border-radius:28px;
 
   background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
   border:1px solid var(--border);
@@ -82,14 +55,14 @@ body::before{
   overflow:hidden;
 }
 
-/* gold edge glow */
+/* Gold glow border */
 .container::after{
   content:"";
   position:absolute;
   inset:-2px;
-  border-radius:28px;
+  border-radius:30px;
   padding:2px;
-  background: linear-gradient(135deg, rgba(247,231,167,.55), rgba(215,180,90,.18), rgba(37,99,235,.12));
+  background: linear-gradient(135deg, rgba(247,231,167,.55), rgba(215,180,90,.25));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -98,212 +71,127 @@ body::before{
   pointer-events:none;
 }
 
-/* top highlight */
-.container::before{
-  content:"";
-  position:absolute;
-  left:-30%;
-  top:-40%;
-  width:160%;
-  height:70%;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.16), transparent 60%);
-  pointer-events:none;
-}
-
 .brand{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:10px;
-  margin-bottom:18px;
+  gap:16px;
+  margin-bottom:22px;
 }
 
+/* 🔥 MUCH BIGGER LOGO */
 .logoWrap{
-  width:128px;   /* ✅ bigger */
-  height:128px;  /* ✅ bigger */
-  border-radius:24px;
+  width:180px;       /* increased */
+  height:180px;      /* increased */
+  border-radius:30px;
   display:grid;
   place-items:center;
 
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
 
   position:relative;
   overflow:hidden;
 }
 
-.logoWrap::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: linear-gradient(120deg, transparent, rgba(247,231,167,.25), transparent);
-  transform: translateX(-120%);
-  animation: shine 3.2s ease-in-out infinite;
-  pointer-events:none;
-}
-
-@keyframes shine{
-  0%,60%{ transform: translateX(-120%); }
-  100%{ transform: translateX(120%); }
-}
-
 .main-logo{
-  width:92px; /* ✅ bigger */
+  width:140px;       /* increased */
   height:auto;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+  filter: drop-shadow(0 16px 28px rgba(0,0,0,.45));
 }
 
 h1{
   margin:0;
-  font-size:22px;
+  font-size:24px;
   letter-spacing:.6px;
   font-weight:850;
 }
 
-/* (tagline removed) */
-
 .divider{
   height:1px;
   width:100%;
-  margin:14px 0 18px;
-  background: linear-gradient(90deg, transparent, rgba(247,231,167,.45), rgba(255,255,255,.12), transparent);
-  opacity:.9;
+  margin:16px 0 22px;
+  background: linear-gradient(90deg, transparent, rgba(247,231,167,.5), transparent);
 }
 
 .menu{
   display:grid;
-  gap:12px;
+  gap:14px;
 }
 
-/* Premium buttons */
 .menu-btn{
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:12px;
 
-  width:100%;
-  padding:14px 14px 14px 16px;
-  border-radius:16px;
+  padding:16px 16px;
+  border-radius:18px;
   text-decoration:none;
   font-weight:800;
-  font-size:14px;
+  font-size:15px;
 
-  color:var(--text);
-  background: rgba(255,255,255,.06);
-  border:1px solid rgba(255,255,255,.12);
+  color:#fff;
+  background: linear-gradient(135deg, rgba(37,99,235,.92), rgba(30,64,175,.92));
+  border:1px solid rgba(255,255,255,.18);
 
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-  position:relative;
-  overflow:hidden;
+  transition: all .2s ease;
+}
+
+.menu-btn.secondary{
+  background: linear-gradient(135deg, rgba(17,24,39,.95), rgba(11,18,32,.95));
+}
+
+.menu-btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 18px 40px rgba(0,0,0,.45);
 }
 
 .menu-btn .left{
   display:flex;
   align-items:center;
-  gap:10px;
-  min-width:0;
+  gap:12px;
 }
 
 .icon{
-  width:40px;
-  height:40px;
-  border-radius:12px;
+  width:44px;
+  height:44px;
+  border-radius:14px;
   display:grid;
   place-items:center;
-  flex:0 0 auto;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.18);
+  background:rgba(255,255,255,.15);
+  font-size:18px;
 }
 
 .label{
   display:flex;
   flex-direction:column;
   align-items:flex-start;
-  text-align:left;
-  min-width:0;
 }
 
 .label strong{
-  font-size:14.5px;
-  letter-spacing:.2px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  font-size:15px;
 }
 
 .label span{
-  margin-top:2px;
   font-size:12px;
   color:var(--muted);
-  font-weight:700;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  font-weight:600;
+  margin-top:2px;
 }
 
-.chev{
-  opacity:.9;
-  font-weight:900;
-  transform: translateX(0);
-  transition: transform .18s ease;
-}
-
-/* glossy sweep */
-.menu-btn::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: linear-gradient(120deg, transparent, rgba(255,255,255,.22), transparent);
-  transform: translateX(-120%);
-  transition: transform .55s ease;
-  pointer-events:none;
-}
-
-.menu-btn:hover::after{ transform: translateX(120%); }
-.menu-btn:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(0,0,0,.35);
-  border-color: rgba(247,231,167,.22);
-}
-.menu-btn:hover .chev{ transform: translateX(3px); }
-
-.menu-btn:active{
-  transform: translateY(0px);
-}
-
-/* Accent styles per button */
-.menu-btn.primary{
-  background: linear-gradient(135deg, rgba(37,99,235,.92), rgba(30,64,175,.92));
-  border-color: rgba(37,99,235,.55);
-}
-.menu-btn.primary .icon{
-  background: rgba(255,255,255,.14);
-  border-color: rgba(255,255,255,.22);
-}
-.menu-btn.secondary{
-  background: linear-gradient(135deg, rgba(17,24,39,.92), rgba(11,18,32,.92));
-  border-color: rgba(247,231,167,.20);
-}
-.menu-btn.secondary .icon{
-  background: rgba(215,180,90,.12);
-  border-color: rgba(247,231,167,.25);
-}
-
-/* footer */
 .note{
-  margin-top:16px;
-  font-size:11.5px;
-  color:rgba(182,192,209,.95);
+  margin-top:18px;
+  font-size:12px;
+  color:var(--muted);
 }
 
-/* Mobile tweaks */
+/* 📱 Mobile scaling */
 @media (max-width:420px){
-  .container{padding:28px 18px 18px}
-  .logoWrap{width:120px;height:120px} /* ✅ bigger than before */
-  .main-logo{width:86px}              /* ✅ bigger than before */
-  h1{font-size:20px}
+  .logoWrap{width:150px;height:150px}
+  .main-logo{width:115px}
+  h1{font-size:21px}
 }
 </style>
 </head>
@@ -313,36 +201,35 @@ h1{
 <div class="container">
 
   <div class="brand">
-    <div class="logoWrap" aria-hidden="true">
+    <div class="logoWrap">
       <img src="logo.png" class="main-logo" alt="Torre KBR Logo">
     </div>
     <h1>Torre KBR Admin</h1>
-    <!-- ✅ Tagline removed -->
   </div>
 
   <div class="divider"></div>
 
   <div class="menu">
-    <a href="calendar.html" class="menu-btn primary">
+    <a href="calendar.html" class="menu-btn">
       <div class="left">
-        <div class="icon" aria-hidden="true">📅</div>
+        <div class="icon">📅</div>
         <div class="label">
           <strong>Booking Calendar</strong>
           <span>Set availability per date</span>
         </div>
       </div>
-      <div class="chev" aria-hidden="true">›</div>
+      ›
     </a>
 
     <a href="guests.html" class="menu-btn secondary">
       <div class="left">
-        <div class="icon" aria-hidden="true">🧾</div>
+        <div class="icon">🧾</div>
         <div class="label">
           <strong>Guests Information</strong>
           <span>Save guest details & payments</span>
         </div>
       </div>
-      <div class="chev" aria-hidden="true">›</div>
+      ›
     </a>
   </div>
 
