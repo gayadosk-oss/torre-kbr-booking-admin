@@ -18,208 +18,58 @@
       --bookBg:#fee2e2; --bookText:#991b1b; --bookBorder:#fecaca;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    header{
-      padding:16px 16px 12px;
-      border-bottom:1px solid var(--border);
-      background:#fff;
-      position:sticky; top:0; z-index:5;
-    }
-    .headerInner{
-      max-width:1100px;
-      margin:0 auto;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    h1{margin:0; font-size:20px; letter-spacing:.2px}
-    .sub{margin:4px 0 0; color:var(--muted); font-size:13px}
-    .mainLink{
-      text-decoration:none;
-      background:#111827;
-      color:#ffffff;
-      padding:8px 16px;
-      border-radius:10px;
-      font-weight:700;
-      font-size:14px;
-      white-space:nowrap;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    header{padding:16px 16px 12px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:5}
+    .headerInner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:20px;letter-spacing:.2px}
+    .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .mainLink{text-decoration:none;background:#111827;color:#fff;padding:8px 16px;border-radius:10px;font-weight:700;font-size:14px;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
     .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .toolbar{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow);
-    }
-    .left,.right{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    select,button,input{
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:10px 12px;
-      font-size:14px;
-      background:#fff;
-      color:var(--text);
-      min-height:40px;
-    }
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+    .left,.right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    select,button,input{border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;background:#fff;color:var(--text);min-height:40px}
     button{cursor:pointer}
-    button.primary{background:var(--accent); color:#fff; border-color:transparent}
+    button.primary{background:var(--accent);color:#fff;border-color:transparent}
     button.ghost{background:#fff}
-
-    .grid{
-      margin-top:14px;
-      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow);
-    }
-    .monthTitle{display:flex; align-items:baseline; justify-content:space-between; padding:6px 6px 10px; gap:10px; flex-wrap:wrap}
+    .grid{margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+    .monthTitle{display:flex;align-items:baseline;justify-content:space-between;padding:6px 6px 10px;gap:10px;flex-wrap:wrap}
     .monthTitle strong{font-size:18px}
-    .monthTitle span{color:var(--muted); font-size:13px}
-
-    .dow{display:grid; grid-template-columns:repeat(7,1fr); gap:10px; padding:0 6px 8px}
-    .dow div{color:var(--muted); font-weight:800; font-size:12px; text-transform:uppercase}
-
-    .days{
-      display:grid;
-      grid-template-columns:repeat(7, minmax(0,1fr));
-      gap:10px;
-      padding:0 6px 6px;
-      align-items:stretch;
-    }
-    .day{
-      min-height:92px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:10px;
-      background:#fff;
-      display:flex; flex-direction:column; gap:8px;
-      transition:transform .05s ease, box-shadow .05s ease;
-      position:relative;
-      outline:none;
-    }
-    .day:hover{transform:translateY(-1px); box-shadow:0 8px 16px rgba(17,24,39,.06)}
-    .day.muted{background:#fafafa; color:#9ca3af}
-    .date{font-weight:900; font-size:13px}
-    .miniRow{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto}
-    .pill{
-      font-size:11px; font-weight:900;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px solid transparent;
-      line-height:1.1;
-    }
-    .pill.av{background:var(--availBg); color:var(--availText); border-color:var(--availBorder)}
-    .pill.bk{background:var(--bookBg); color:var(--bookText); border-color:var(--bookBorder)}
-    .hint{font-size:11px; color:var(--muted)}
-
-    .modalOverlay{
-      position:fixed;
-      inset:0;
-      background:rgba(17,24,39,.55);
-      display:none;
-
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-
-      padding:16px;
-      z-index:50;
-
-      align-items:flex-start;
-      justify-content:center;
-    }
-
-    .modal{
-      width:min(820px, 100%);
-      background:#fff;
-      border-radius:16px;
-      box-shadow:0 20px 60px rgba(0,0,0,.25);
-      border:1px solid var(--border);
-
-      max-height:calc(100vh - 32px);
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-
-      margin:0 auto;
-      padding:14px;
-      padding-bottom:calc(14px + env(safe-area-inset-bottom));
-    }
-
-    .modalHeader{
-      position:sticky;
-      top:0;
-      background:#fff;
-      z-index:5;
-
-      margin:-14px -14px 0;
-      padding:14px;
-      border-bottom:1px solid var(--border);
-      border-top-left-radius:16px;
-      border-top-right-radius:16px;
-
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
+    .monthTitle span{color:var(--muted);font-size:13px}
+    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:0 6px 8px}
+    .dow div{color:var(--muted);font-weight:800;font-size:12px;text-transform:uppercase}
+    .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;padding:0 6px 6px;align-items:stretch}
+    .day{min-height:92px;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff;display:flex;flex-direction:column;gap:8px;transition:transform .05s ease, box-shadow .05s ease;position:relative;outline:none}
+    .day:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(17,24,39,.06)}
+    .day.muted{background:#fafafa;color:#9ca3af}
+    .date{font-weight:900;font-size:13px}
+    .miniRow{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+    .pill{font-size:11px;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid transparent;line-height:1.1}
+    .pill.av{background:var(--availBg);color:var(--availText);border-color:var(--availBorder)}
+    .pill.bk{background:var(--bookBg);color:var(--bookText);border-color:var(--bookBorder)}
+    .hint{font-size:11px;color:var(--muted)}
+    .modalOverlay{position:fixed;inset:0;background:rgba(17,24,39,.55);display:none;overflow:auto;-webkit-overflow-scrolling:touch;padding:16px;z-index:50;align-items:flex-start;justify-content:center}
+    .modal{width:min(820px,100%);background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);border:1px solid var(--border);max-height:calc(100vh - 32px);overflow:auto;-webkit-overflow-scrolling:touch;margin:0 auto;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+    .modalHeader{position:sticky;top:0;background:#fff;z-index:5;margin:-14px -14px 0;padding:14px;border-bottom:1px solid var(--border);border-top-left-radius:16px;border-top-right-radius:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
     .modalHeader strong{font-size:16px}
     .modalHeader button{padding:8px 10px}
-
-    .modalBody{margin-top:12px; display:grid; gap:12px}
-    .unitGrid{
-      display:grid;
-      grid-template-columns:repeat(4, minmax(0,1fr));
-      gap:10px;
-    }
-    .unitCard{
-      border:1px solid var(--border);
-      border-radius:14px;
-      padding:10px;
-      background:#fff;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .unitName{font-weight:950; font-size:13px}
-    .unitSelect{
-      width:140px;
-      padding:8px 10px;
-      border-radius:12px;
-      font-weight:900;
-      border:1px solid var(--border);
-      background:#fff;
-    }
-    .unitSelect.av{background:var(--availBg); color:var(--availText); border-color:var(--availBorder)}
-    .unitSelect.bk{background:var(--bookBg); color:var(--bookText); border-color:var(--bookBorder)}
-
-    .actions{
-      display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;
-      border-top:1px solid var(--border);
-      padding-top:12px;
-    }
-    .actionsLeft,.actionsRight{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .small{font-size:12px; color:var(--muted)}
-    .footerNote{margin-top:10px; color:var(--muted); font-size:12px; text-align:center}
-
-    @media (max-width:860px){
-      .unitGrid{grid-template-columns:repeat(2, minmax(0,1fr))}
-    }
-    @media (max-width:720px){
-      .dow{display:none}
-      .days{grid-template-columns:repeat(2, minmax(0,1fr))}
-    }
+    .modalBody{margin-top:12px;display:grid;gap:12px}
+    .unitGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .unitCard{border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .unitName{font-weight:950;font-size:13px}
+    .unitSelect{width:140px;padding:8px 10px;border-radius:12px;font-weight:900;border:1px solid var(--border);background:#fff}
+    .unitSelect.av{background:var(--availBg);color:var(--availText);border-color:var(--availBorder)}
+    .unitSelect.bk{background:var(--bookBg);color:var(--bookText);border-color:var(--bookBorder)}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:12px}
+    .actionsLeft,.actionsRight{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+    .footerNote{margin-top:10px;color:var(--muted);font-size:12px;text-align:center}
+    @media (max-width:860px){.unitGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:720px){.dow{display:none}.days{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:520px){
       .day{min-height:82px}
       .unitGrid{grid-template-columns:1fr}
       .unitSelect{width:160px}
-
-      .headerInner{flex-direction:column; align-items:flex-start}
+      .headerInner{flex-direction:column;align-items:flex-start}
       .mainLink{align-self:flex-end}
     }
   </style>
@@ -290,7 +140,7 @@
         </div>
       </div>
 
-      <div class="small" id="saveStatus">Saved locally in this browser (no login needed).</div>
+      <div class="small" id="saveStatus">Loading from Google Sheets…</div>
     </div>
   </div>
 </div>
@@ -300,17 +150,15 @@
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
 
-  // ====== Remote storage (Google Sheets via Apps Script) ======
+  // ====== Remote storage (Google Sheets via Apps Script JSONP) ======
   const API_URL = "https://script.google.com/macros/s/AKfycbxhgciD9s7x4pPtyGffjzPhLED_DQ0eONXj_iVsKoQu-meszK9O6JRNyQT0YKvBqxg1xQ/exec";
   const API_KEY = "kbr_super_secret_2026";
   const CAL_TAB = "calendar";
-  const CAL_KEY = STORAGE_KEY; // one record for the whole year
+  const CAL_KEY = STORAGE_KEY;
 
-  // Units
   const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-  // data shape:
-  // { "2026-02-14": { "D1":"available", "D2":"booked", ... }, ... }
   let data = {}; // loaded on init
 
   // ===== iOS Background Scroll Lock =====
@@ -358,45 +206,42 @@
 
   const saveStatus = document.getElementById("saveStatus");
 
-  const MONTHS = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
-
-  // ====== Remote storage helpers ======
   function setStatus(msg){
-    if (!saveStatus) return;
-    saveStatus.textContent = msg;
+    if (saveStatus) saveStatus.textContent = msg;
   }
 
-  async function apiGet(tab, key){
-    const url = `${API_URL}?key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(key)}`;
-    const res = await fetch(url, { method: "GET" });
-    if (!res.ok) throw new Error("API GET failed");
-    const out = await res.json();
-    return out?.data ?? null;
-  }
-
-  async function apiSet(tab, key, obj){
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: API_KEY, tab, k: key, data: obj })
+  // ===== JSONP Helper =====
+  function jsonp(url){
+    return new Promise((resolve, reject) => {
+      const cb = "cb_" + Math.random().toString(36).slice(2);
+      const s = document.createElement("script");
+      const cleanup = () => {
+        try { delete window[cb]; } catch {}
+        s.remove();
+      };
+      window[cb] = (res) => { cleanup(); resolve(res); };
+      s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
+      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb);
+      document.body.appendChild(s);
     });
-    if (!res.ok) throw new Error("API POST failed");
-    return res.json();
   }
 
-  async function loadData(){
-    // Cloud first (shared across devices)
-    try{
-      const cloud = await apiGet(CAL_TAB, CAL_KEY);
-      if (cloud && typeof cloud === "object") return cloud;
-    }catch(e){
-      console.warn("Cloud load failed, using local cache.", e);
-    }
+  async function apiGet(tab, k){
+    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}`;
+    const out = await jsonp(url);
+    if (!out || !out.ok) throw new Error(out?.error || "GET failed");
+    return out.data ?? null;
+  }
 
-    // Local fallback
+  async function apiSet(tab, k, obj){
+    const raw = encodeURIComponent(JSON.stringify(obj));
+    const url = `${API_URL}?op=set&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&data=${raw}`;
+    const out = await jsonp(url);
+    if (!out || !out.ok) throw new Error(out?.error || "SET failed");
+    return out;
+  }
+
+  function loadLocal(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : {};
@@ -405,33 +250,50 @@
     }
   }
 
-  // Debounced save (prevents spamming writes)
+  async function initLoad(){
+    // local first
+    data = loadLocal();
+    render();
+
+    // cloud override
+    try{
+      setStatus("Loading from Google Sheets…");
+      const cloud = await apiGet(CAL_TAB, CAL_KEY);
+      if (cloud && typeof cloud === "object"){
+        data = cloud;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+        render();
+        setStatus("Loaded from Google Sheets (sync across devices).");
+      } else {
+        setStatus("No cloud data yet. Your next Save will create it in Google Sheets.");
+      }
+    }catch(e){
+      console.warn("Cloud load failed; using local.", e);
+      setStatus("Offline: using local cache. (Cloud load failed)");
+    }
+  }
+
+  // Debounced save
   let __saveTimer = null;
   function persistSoon(){
     clearTimeout(__saveTimer);
-    __saveTimer = setTimeout(() => {
-      persist().catch(console.error);
-    }, 500);
+    __saveTimer = setTimeout(() => { persist().catch(()=>{}); }, 700);
   }
 
   async function persist(){
-    setStatus("Saving...");
-    // Local cache
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }catch{}
+    setStatus("Saving…");
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
 
-    // Cloud save
     try{
       await apiSet(CAL_TAB, CAL_KEY, data);
       setStatus("Saved to Google Sheets (syncs across devices).");
     }catch(e){
-      console.warn("Cloud save failed, kept locally.", e);
+      console.warn("Cloud save failed; kept locally.", e);
       setStatus("Saved locally only (cloud sync failed).");
     }
   }
 
-  // ====== Month selector ======
+  // ===== Month selector =====
   MONTHS.forEach((m, idx) => {
     const opt = document.createElement("option");
     opt.value = idx;
@@ -439,7 +301,7 @@
     monthSelect.appendChild(opt);
   });
 
-  let currentMonth = 0; // default Jan
+  let currentMonth = 0;
   monthSelect.value = String(currentMonth);
 
   monthSelect.addEventListener("change", () => {
@@ -465,7 +327,7 @@
     render();
   });
 
-  // ====== Calendar render ======
+  // ===== Calendar render =====
   function render() {
     const first = new Date(YEAR, currentMonth, 1);
     const last = new Date(YEAR, currentMonth + 1, 0);
@@ -533,7 +395,7 @@
     return { booked, available };
   }
 
-  // ====== Modal ======
+  // ===== Modal =====
   let activeDate = null;
   let workingMap = null;
 
@@ -620,7 +482,7 @@
     closeModal();
   });
 
-  // ====== Export / Import ======
+  // ===== Export / Import =====
   exportBtn.addEventListener("click", () => {
     const payload = JSON.stringify({ year: YEAR, units: UNITS, data }, null, 2);
     const blob = new Blob([payload], { type: "application/json" });
@@ -659,16 +521,13 @@
     input.click();
   });
 
-  // ====== Helpers ======
   function toISODate(y,m,d){
     return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   }
 
-  // init (load cloud first, then render)
+  // init
   (async function init(){
-    setStatus("Loading from Google Sheets...");
-    data = await loadData();
-    render();
+    await initLoad();
     setStatus("Ready. Changes will sync across devices when you Save.");
   })();
 </script>
