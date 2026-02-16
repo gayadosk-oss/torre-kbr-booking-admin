@@ -50,7 +50,6 @@
     }
     .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
     .btn.danger{background:var(--dangerBg);border-color:var(--dangerBd);color:#991b1b}
-    .btn.small{padding:8px 10px;border-radius:10px;font-size:12px;font-weight:900}
 
     .wrap{max-width:1180px;margin:0 auto;padding:16px}
 
@@ -129,7 +128,7 @@
       display:none; align-items:center; justify-content:center; padding:16px; z-index:20;
     }
     .modal{
-      width:min(980px, 100%);
+      width:min(900px, 100%);
       background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.25);
       border:1px solid var(--border);
       padding:14px;
@@ -145,10 +144,6 @@
       font-weight:900;
     }
 
-    .topRow{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      margin-top:10px;
-    }
     .savePill{
       font-size:12px;
       font-weight:900;
@@ -160,63 +155,43 @@
     }
     .savePill.ok{color:var(--okText); border-color:var(--okBd); background:var(--okBg)}
 
-    .rowsWrap{
+    .formWrap{
       margin-top:10px;
-      border:1px solid var(--border);
-      border-radius:16px;
-      overflow:auto;
-    }
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      min-width:980px;
-      background:#fff;
-    }
-    thead th{
-      position:sticky; top:0;
-      background:#0b1220;
-      color:#fff;
-      font-size:12px;
-      letter-spacing:.4px;
-      text-transform:uppercase;
-      padding:10px 10px;
-      border-right:1px solid rgba(255,255,255,.08);
-      white-space:nowrap;
-      z-index:2;
-    }
-    tbody td{
       border-top:1px solid var(--border);
-      border-right:1px solid var(--border);
-      padding:8px;
-      vertical-align:top;
-      background:#fff;
+      padding-top:12px;
     }
-    tbody tr:nth-child(even) td{background:#fcfcfd}
-
-    .cell, .cellSelect, .cellArea{
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+    }
+    .formGrid .full{grid-column: 1 / -1}
+    .formGrid .two{grid-column: span 2}
+    .field label{display:block;margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:900}
+    .field input, .field select, .field textarea{
       width:100%;
       border:1px solid var(--border);
       border-radius:12px;
-      padding:9px 10px;
-      font-size:13px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
       background:#fff;
       color:var(--text);
-      outline:none;
+      min-height:40px;
     }
-    .cellArea{min-height:40px;resize:vertical}
-    .delCell{white-space:nowrap}
-    .small{font-size:12px; color:var(--muted); margin-top:8px}
+    textarea{min-height:86px; resize:vertical}
 
-    .actions{
+    .modalActions{
       display:flex; gap:10px; justify-content:flex-end; align-items:center; flex-wrap:wrap;
       margin-top:12px;
     }
+    .small{font-size:12px; color:var(--muted); margin-top:8px}
 
     @media (max-width:820px){
       .days{grid-template-columns:repeat(2,1fr)}
       .dow{display:none}
-      table{min-width:900px}
+      .formGrid{grid-template-columns:1fr}
+      .formGrid .two{grid-column: 1 / -1}
     }
     @media (max-width:640px){
       input{min-width:180px}
@@ -228,7 +203,7 @@
   <div class="headerInner">
     <div>
       <h1>Torre KBR • Guests Information</h1>
-      <p class="sub">2026 • Click a date → add multiple entries • 1 entry per unit (no duplicates) • Auto-saves</p>
+      <p class="sub">2026 • Click a date → choose a unit → edit details • Each unit saves separately • Auto-saves</p>
     </div>
     <a class="btn primary" href="index.html">⬅ Main Menu</a>
   </div>
@@ -273,54 +248,85 @@
 <div class="modalOverlay" id="modalOverlay">
   <div class="modal">
     <div class="modalHeader">
-      <strong id="modalTitle">Guest Details</strong>
-      <button class="xBtn" id="closeModalBtn">✕</button>
-    </div>
-
-    <div class="topRow">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <button class="btn small primary" id="addRowBtn">＋ Add Entry</button>
-        <button class="btn small" id="sortUnitBtn">⇅ Sort by Unit</button>
+      <div>
+        <strong id="modalTitle">Guest Details</strong>
+        <div class="small" id="modalSub">Choose a unit then edit details. Each unit is saved separately.</div>
       </div>
-      <div class="savePill" id="savePill">Saved</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="savePill" id="savePill">Saved</div>
+        <button class="xBtn" id="closeModalBtn">✕</button>
+      </div>
     </div>
 
-    <div class="rowsWrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="min-width:140px">Unit</th>
-            <th style="min-width:220px">Name of Guest/s</th>
-            <th style="min-width:110px">No. of Pax</th>
-            <th style="min-width:120px">Check-in</th>
-            <th style="min-width:120px">Check-out</th>
-            <th style="min-width:140px">Downpayment</th>
-            <th style="min-width:120px">Balance</th>
-            <th style="min-width:120px">Total</th>
-            <th style="min-width:140px">M.O.P</th>
-            <th style="min-width:160px">Contact No.</th>
-            <th style="min-width:220px">Remarks</th>
-            <th style="min-width:110px">Action</th>
-          </tr>
-        </thead>
-        <tbody id="rowsBody"></tbody>
-      </table>
-    </div>
+    <div class="formWrap">
+      <div class="formGrid">
+        <div class="field full">
+          <label for="unitSelect">Unit</label>
+          <select id="unitSelect"></select>
+        </div>
 
-    <div class="actions">
-      <button class="btn danger" id="clearDateBtn">Clear this date</button>
-      <button class="btn" id="cancelBtn">Close</button>
-      <button class="btn primary" id="saveBtn">Save</button>
-    </div>
+        <div class="field full">
+          <label for="guestName">Name of Guest/s</label>
+          <input id="guestName" placeholder="e.g., Juan Dela Cruz" />
+        </div>
 
-    <div class="small">Rule: Only 1 entry per unit per date. Used units are disabled automatically.</div>
+        <div class="field">
+          <label for="pax">No. of Pax</label>
+          <input id="pax" placeholder="0" />
+        </div>
+        <div class="field">
+          <label for="checkin">Check-in</label>
+          <input id="checkin" placeholder="e.g., 2:00 PM" />
+        </div>
+        <div class="field">
+          <label for="checkout">Check-out</label>
+          <input id="checkout" placeholder="e.g., 12:00 NN" />
+        </div>
+
+        <div class="field">
+          <label for="down">Downpayment</label>
+          <input id="down" placeholder="₱" />
+        </div>
+        <div class="field">
+          <label for="bal">Balance</label>
+          <input id="bal" placeholder="₱" />
+        </div>
+        <div class="field">
+          <label for="total">Total</label>
+          <input id="total" placeholder="₱" />
+        </div>
+
+        <div class="field two">
+          <label for="mop">M.O.P</label>
+          <input id="mop" placeholder="Cash / GCash / Bank" />
+        </div>
+        <div class="field">
+          <label for="contact">Contact No.</label>
+          <input id="contact" placeholder="09xx..." />
+        </div>
+
+        <div class="field full">
+          <label for="remarks">Remarks</label>
+          <textarea id="remarks" placeholder="Notes..."></textarea>
+        </div>
+      </div>
+
+      <div class="modalActions">
+        <button class="btn danger" id="clearUnitBtn">Clear this unit</button>
+        <button class="btn danger" id="clearDateBtn">Clear this date</button>
+        <button class="btn" id="cancelBtn">Close</button>
+        <button class="btn primary" id="saveBtn">Save</button>
+      </div>
+
+      <div class="small">Rule: One entry per unit per date (D1 can’t be duplicated). Switching unit shows that unit’s saved info.</div>
+    </div>
   </div>
 </div>
 
 <script>
   // ===== Config =====
   const YEAR = 2026;
-  const STORAGE_KEY = `torre-kbr-guests-multi-${YEAR}`;
+  const STORAGE_KEY = `torre-kbr-guests-byunit-${YEAR}`;
 
   const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
   const MONTHS = [
@@ -328,8 +334,8 @@
     "July","August","September","October","November","December"
   ];
 
-  // Data shape:
-  // { "YYYY-MM-DD": [ {unit,...}, {unit,...} ] }
+  // Data shape (prevents duplicates by design):
+  // { "YYYY-MM-DD": { "D1": {..fields..}, "D2": {..fields..}, ... } }
   let data = loadData();
 
   // ===== Elements =====
@@ -344,14 +350,25 @@
 
   const modalOverlay = document.getElementById("modalOverlay");
   const modalTitle   = document.getElementById("modalTitle");
+  const modalSub     = document.getElementById("modalSub");
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelBtn    = document.getElementById("cancelBtn");
   const saveBtn      = document.getElementById("saveBtn");
   const clearDateBtn = document.getElementById("clearDateBtn");
+  const clearUnitBtn = document.getElementById("clearUnitBtn");
   const savePill     = document.getElementById("savePill");
-  const rowsBody     = document.getElementById("rowsBody");
-  const addRowBtn    = document.getElementById("addRowBtn");
-  const sortUnitBtn  = document.getElementById("sortUnitBtn");
+
+  const unitSelectEl = document.getElementById("unitSelect");
+  const guestNameEl  = document.getElementById("guestName");
+  const paxEl        = document.getElementById("pax");
+  const checkinEl    = document.getElementById("checkin");
+  const checkoutEl   = document.getElementById("checkout");
+  const downEl       = document.getElementById("down");
+  const balEl        = document.getElementById("bal");
+  const totalEl      = document.getElementById("total");
+  const mopEl        = document.getElementById("mop");
+  const contactEl    = document.getElementById("contact");
+  const remarksEl    = document.getElementById("remarks");
 
   // ===== Month selector =====
   MONTHS.forEach((m, idx) => {
@@ -372,7 +389,7 @@
 
   searchInput.addEventListener("input", () => render());
 
-  // ===== Render calendar =====
+  // ===== Calendar render =====
   function render(){
     const first = new Date(YEAR, currentMonth, 1);
     const last  = new Date(YEAR, currentMonth + 1, 0);
@@ -380,11 +397,10 @@
     const daysInMonth = last.getDate();
 
     monthTitle.textContent = `${MONTHS[currentMonth]} ${YEAR}`;
-
     const q = searchInput.value.trim().toLowerCase();
     monthMeta.textContent = q
       ? `Filtered by: "${searchInput.value.trim()}"`
-      : `Click a date to add/view entries (${daysInMonth} days)`;
+      : `Click a date to add/view guest entries (${daysInMonth} days)`;
 
     daysGrid.innerHTML = "";
 
@@ -397,22 +413,23 @@
 
     for (let d=1; d<=daysInMonth; d++){
       const dateStr = toISODate(YEAR, currentMonth+1, d);
-      const list = normalizeList(data[dateStr]);
+      const byUnit = data[dateStr] || {};
+      const entries = Object.entries(byUnit)
+        .map(([unit, obj]) => ({ unit, ...(obj||{}) }))
+        .filter(x => hasAnyField(x));
 
       if (q){
-        const hay = list.map(x => [
+        const hay = entries.map(x => [
           x.unit, x.guestName, x.contact, x.remarks, x.mop
         ].join(" ")).join(" ").toLowerCase();
         const extra = `${MONTHS[currentMonth].slice(0,3)} ${d} ${dateStr}`.toLowerCase();
         if (!hay.includes(q) && !extra.includes(q)) continue;
       }
 
-      const filled = list.filter(hasAnyField);
-      const count = filled.length;
-
+      const count = entries.length;
       let preview = "No entries yet";
       if (count === 1){
-        preview = filled[0].guestName?.trim() ? filled[0].guestName.trim() : "1 entry saved";
+        preview = entries[0].guestName?.trim() ? entries[0].guestName.trim() : "1 entry saved";
       } else if (count > 1){
         preview = `${count} entries saved`;
       }
@@ -431,7 +448,7 @@
         <div class="meta">${escapeHtml(preview)}</div>
         <div class="pillRow">
           <span class="pill ${count ? "ok" : "none"}">${count ? `${count} Saved` : "Empty"}</span>
-          ${count ? `<span class="pill ok">${escapeHtml(uniqueUnitsLabel(filled))}</span>` : ``}
+          ${count ? `<span class="pill ok">${escapeHtml(unitsLabel(entries))}</span>` : ``}
         </div>
         <div class="hint">Click to edit</div>
       `;
@@ -440,8 +457,8 @@
     }
   }
 
-  function uniqueUnitsLabel(list){
-    const u = [...new Set(list.map(x => (x.unit||"").trim()).filter(Boolean))];
+  function unitsLabel(entries){
+    const u = [...new Set(entries.map(x => (x.unit||"").trim()).filter(Boolean))];
     if (!u.length) return "—";
     if (u.length <= 2) return u.join(", ");
     return `${u[0]}, ${u[1]} +${u.length-2}`;
@@ -449,7 +466,6 @@
 
   function defaultEntry(){
     return {
-      unit:"",
       guestName:"",
       pax:"",
       checkin:"",
@@ -463,35 +479,47 @@
     };
   }
 
-  function normalizeList(v){
-    if (!Array.isArray(v)) return [];
-    return v.map(x => ({...defaultEntry(), ...(x||{})}));
-  }
-
   function hasAnyField(x){
     const obj = x || {};
-    return Object.keys(defaultEntry()).some(k => String(obj[k] ?? "").trim() !== "");
+    const keys = Object.keys(defaultEntry()).concat(["unit"]);
+    return keys.some(k => String(obj[k] ?? "").trim() !== "");
   }
 
-  // ===== Modal logic =====
+  // ===== Modal (form style like screenshot) =====
   let activeDate = null;
+  let activeUnit = UNITS[0];
   let saveTimer = null;
+  let loadingUnit = false;
+
+  // Populate unit select once
+  function initUnitSelect(){
+    unitSelectEl.innerHTML = `<option value="">— Select —</option>` + UNITS.map(u => `<option value="${escapeAttr(u)}">${escapeHtml(u)}</option>`).join("");
+  }
+  initUnitSelect();
 
   function openModal(dateStr){
     activeDate = dateStr;
     modalTitle.textContent = `Guest Details • ${dateStr}`;
+    modalSub.textContent = `Choose a unit (D1–ROOM C). Each unit is saved separately for this date.`;
     showSaved();
 
-    const list = normalizeList(data[dateStr]);
-    renderRows(list.length ? list : [defaultEntry()]);
+    // default unit = first free if possible, else D1
+    const byUnit = data[activeDate] || {};
+    const used = new Set(Object.keys(byUnit).filter(u => hasAnyField({unit:u, ...(byUnit[u]||{})})));
+    const firstFree = UNITS.find(u => !used.has(u)) || UNITS[0];
+    activeUnit = firstFree;
+
+    unitSelectEl.value = activeUnit;
+    loadUnitToForm(activeUnit);
 
     modalOverlay.style.display = "flex";
+    guestNameEl.focus();
   }
 
   function closeModal(){
     modalOverlay.style.display = "none";
     activeDate = null;
-    rowsBody.innerHTML = "";
+    activeUnit = UNITS[0];
   }
 
   closeModalBtn.addEventListener("click", closeModal);
@@ -500,195 +528,96 @@
     if (e.target === modalOverlay) closeModal();
   });
 
-  addRowBtn.addEventListener("click", () => {
-    const list = readRows();
-    const nextUnit = findFirstFreeUnit(list);
-    list.push({ ...defaultEntry(), unit: nextUnit || "" });
-    renderRows(list);
-    scheduleAutosave();
+  unitSelectEl.addEventListener("change", () => {
+    const u = (unitSelectEl.value || "").trim();
+    if (!u || !UNITS.includes(u)) return;
+    // save current unit before switching
+    scheduleAutosave(true);
+    activeUnit = u;
+    loadUnitToForm(activeUnit);
   });
 
-  sortUnitBtn.addEventListener("click", () => {
-    const list = readRows();
-    list.sort((a,b) => unitRank(a.unit) - unitRank(b.unit));
-    renderRows(list);
-    scheduleAutosave();
-  });
+  function loadUnitToForm(unit){
+    loadingUnit = true;
+    const byUnit = data[activeDate] || {};
+    const entry = { ...defaultEntry(), ...(byUnit[unit] || {}) };
 
-  function unitRank(u){
-    const idx = UNITS.indexOf((u||"").trim());
-    return idx === -1 ? 999 : idx;
+    guestNameEl.value = entry.guestName || "";
+    paxEl.value       = entry.pax || "";
+    checkinEl.value   = entry.checkin || "";
+    checkoutEl.value  = entry.checkout || "";
+    downEl.value      = entry.down || "";
+    balEl.value       = entry.bal || "";
+    totalEl.value     = entry.total || "";
+    mopEl.value       = entry.mop || "";
+    contactEl.value   = entry.contact || "";
+    remarksEl.value   = entry.remarks || "";
+
+    loadingUnit = false;
   }
 
-  function findFirstFreeUnit(list){
-    const used = new Set(list.map(x => (x.unit||"").trim()).filter(Boolean));
-    return UNITS.find(u => !used.has(u)) || "";
+  // Auto-save when typing
+  const formEls = [guestNameEl,paxEl,checkinEl,checkoutEl,downEl,balEl,totalEl,mopEl,contactEl,remarksEl];
+  formEls.forEach(el => el.addEventListener("input", () => scheduleAutosave(false)));
+
+  function getFormData(){
+    return {
+      guestName: guestNameEl.value,
+      pax: paxEl.value,
+      checkin: checkinEl.value,
+      checkout: checkoutEl.value,
+      down: downEl.value,
+      bal: balEl.value,
+      total: totalEl.value,
+      mop: mopEl.value,
+      contact: contactEl.value,
+      remarks: remarksEl.value
+    };
   }
 
-  function renderRows(list){
-    rowsBody.innerHTML = "";
-    list.forEach((row, idx) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${unitSelectHtml(idx, row.unit)}</td>
-        <td><input class="cell" data-i="${idx}" data-k="guestName" value="${escapeAttr(row.guestName)}" placeholder="Guest name/s"></td>
-        <td><input class="cell" data-i="${idx}" data-k="pax" value="${escapeAttr(row.pax)}" placeholder="0"></td>
-        <td><input class="cell" data-i="${idx}" data-k="checkin" value="${escapeAttr(row.checkin)}" placeholder="e.g., 2:00 PM"></td>
-        <td><input class="cell" data-i="${idx}" data-k="checkout" value="${escapeAttr(row.checkout)}" placeholder="e.g., 12:00 NN"></td>
-        <td><input class="cell" data-i="${idx}" data-k="down" value="${escapeAttr(row.down)}" placeholder="₱"></td>
-        <td><input class="cell" data-i="${idx}" data-k="bal" value="${escapeAttr(row.bal)}" placeholder="₱"></td>
-        <td><input class="cell" data-i="${idx}" data-k="total" value="${escapeAttr(row.total)}" placeholder="₱"></td>
-        <td><input class="cell" data-i="${idx}" data-k="mop" value="${escapeAttr(row.mop)}" placeholder="Cash / GCash / Bank"></td>
-        <td><input class="cell" data-i="${idx}" data-k="contact" value="${escapeAttr(row.contact)}" placeholder="09xx..."></td>
-        <td><textarea class="cellArea" data-i="${idx}" data-k="remarks" placeholder="Remarks...">${escapeHtml(row.remarks)}</textarea></td>
-        <td class="delCell">
-          <button class="btn small danger" data-del="${idx}">Delete</button>
-        </td>
-      `;
-      rowsBody.appendChild(tr);
-    });
-
-    // input handlers
-    rowsBody.querySelectorAll("input[data-i], textarea[data-i]").forEach(el => {
-      el.addEventListener("input", scheduleAutosave);
-    });
-
-    // unit change handler with duplicate protection
-    rowsBody.querySelectorAll("select[data-i][data-k='unit']").forEach(sel => {
-      sel.addEventListener("change", (e) => {
-        const ok = enforceUniqueUnits(e.target);
-        refreshUnitOptionDisables();
-        if (ok) scheduleAutosave();
-      });
-    });
-
-    // delete handlers
-    rowsBody.querySelectorAll("button[data-del]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const i = Number(btn.getAttribute("data-del"));
-        const list = readRows();
-        list.splice(i, 1);
-        if (!list.length) list.push(defaultEntry());
-        renderRows(list);
-        scheduleAutosave();
-      });
-    });
-
-    // disable used unit options across rows
-    refreshUnitOptionDisables();
-  }
-
-  function unitSelectHtml(i, value){
-    const opts = ['<option value="">— Select —</option>']
-      .concat(UNITS.map(u => `<option value="${escapeAttr(u)}"${u===value?' selected':''}>${escapeHtml(u)}</option>`))
-      .join("");
-    return `<select class="cellSelect" data-i="${i}" data-k="unit" data-prev="${escapeAttr(value||"")}">${opts}</select>`;
-  }
-
-  function enforceUniqueUnits(changedSelect){
-    const newVal = (changedSelect.value || "").trim();
-    const prevVal = (changedSelect.getAttribute("data-prev") || "").trim();
-
-    // allow clearing
-    if (!newVal){
-      changedSelect.setAttribute("data-prev", "");
-      return true;
-    }
-
-    // check duplicate in other selects
-    const selects = [...rowsBody.querySelectorAll("select[data-k='unit']")];
-    const duplicate = selects.some(s => s !== changedSelect && (s.value||"").trim() === newVal);
-
-    if (duplicate){
-      alert(`"${newVal}" is already used for this date. Only 1 entry per unit is allowed.`);
-      // revert
-      changedSelect.value = prevVal || "";
-      return false;
-    }
-
-    // accept
-    changedSelect.setAttribute("data-prev", newVal);
-    return true;
-  }
-
-  function refreshUnitOptionDisables(){
-    const selects = [...rowsBody.querySelectorAll("select[data-k='unit']")];
-    const used = selects.map(s => (s.value||"").trim()).filter(Boolean);
-
-    selects.forEach(sel => {
-      const current = (sel.value||"").trim();
-      [...sel.options].forEach(opt => {
-        const v = (opt.value||"").trim();
-        if (!v) { opt.disabled = false; return; } // allow "— Select —"
-        // disable if used elsewhere, but keep current enabled
-        opt.disabled = (v !== current) && used.includes(v);
-      });
-    });
-  }
-
-  function readRows(){
-    const list = [];
-    const trs = [...rowsBody.querySelectorAll("tr")];
-    trs.forEach((tr, idx) => {
-      const row = defaultEntry();
-      tr.querySelectorAll("[data-i]").forEach(el => {
-        const i = Number(el.getAttribute("data-i"));
-        if (i !== idx) return;
-        const k = el.getAttribute("data-k");
-        if (!k) return;
-        row[k] = (el.tagName === "TEXTAREA") ? el.value : el.value;
-      });
-      list.push(row);
-    });
-    return list;
-  }
-
-  function scheduleAutosave(){
-    if (!activeDate) return;
+  function scheduleAutosave(immediate){
+    if (!activeDate || !activeUnit || loadingUnit) return;
     showSaving();
     if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      // store only rows with something
-      const list = readRows().filter(hasAnyField);
 
-      // final safety: remove duplicates by unit (keep first)
-      const seen = new Set();
-      const deduped = [];
-      for (const r of list){
-        const u = (r.unit||"").trim();
-        if (u && seen.has(u)) continue;
-        if (u) seen.add(u);
-        deduped.push(r);
-      }
+    const commit = () => {
+      const byUnit = data[activeDate] || {};
+      const entry = getFormData();
 
-      if (deduped.length) data[activeDate] = deduped;
+      // Save/remove per unit
+      const filled = hasAnyField({unit: activeUnit, ...entry});
+      if (filled) byUnit[activeUnit] = entry;
+      else delete byUnit[activeUnit];
+
+      // If date becomes empty, remove it
+      const stillHasAny = Object.keys(byUnit).some(u => hasAnyField({unit:u, ...(byUnit[u]||{})}));
+      if (stillHasAny) data[activeDate] = byUnit;
       else delete data[activeDate];
 
       persist();
       showSaved();
       render();
-    }, 250);
+    };
+
+    saveTimer = setTimeout(commit, immediate ? 0 : 250);
   }
 
-  saveBtn.addEventListener("click", () => {
-    if (!activeDate) return;
+  saveBtn.addEventListener("click", () => scheduleAutosave(true));
 
-    const list = readRows().filter(hasAnyField);
+  clearUnitBtn.addEventListener("click", () => {
+    if (!activeDate || !activeUnit) return;
+    if (!confirm(`Clear details for ${activeUnit} on ${activeDate}?`)) return;
 
-    // final safety: remove duplicates by unit (keep first)
-    const seen = new Set();
-    const deduped = [];
-    for (const r of list){
-      const u = (r.unit||"").trim();
-      if (u && seen.has(u)) continue;
-      if (u) seen.add(u);
-      deduped.push(r);
-    }
+    // clear form + delete unit entry
+    const byUnit = data[activeDate] || {};
+    delete byUnit[activeUnit];
 
-    if (deduped.length) data[activeDate] = deduped;
+    const stillHasAny = Object.keys(byUnit).some(u => hasAnyField({unit:u, ...(byUnit[u]||{})}));
+    if (stillHasAny) data[activeDate] = byUnit;
     else delete data[activeDate];
 
     persist();
+    loadUnitToForm(activeUnit); // empty
     showSaved();
     render();
   });
