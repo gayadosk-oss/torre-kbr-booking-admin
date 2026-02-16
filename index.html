@@ -3,716 +3,347 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Torre KBR Booking Admin — 2026</title>
+  <title>Torre KBR Booking Admin — Guests</title>
   <style>
     :root{
-      --bg:#0b0f14;
-      --panel:#111827;
-      --panel2:#0f172a;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --line:#233047;
-      --accent:#60a5fa;
-      --good:#16a34a;
-      --bad:#b91c1c;
-      --warn:#f59e0b;
-      --chip:#0b1220;
+      --bg:#fff; --text:#111; --muted:#666; --line:#e8e8e8;
+      --btn:#111; --btnText:#fff;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, #0b1a33 0%, var(--bg) 55%);
-      color:var(--text);
-    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+    body{margin:0;background:var(--bg);color:var(--text);}
     header{
-      padding:20px 16px 10px;
-      max-width:1200px;
-      margin:0 auto;
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
+      position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);
+      padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;
     }
-    .title{
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-    .title h1{
-      font-size:20px;
-      margin:0;
-      letter-spacing:.2px;
-    }
-    .title p{margin:0;color:var(--muted);font-size:13px}
-    .bar{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-    }
-    select, button, input, textarea{
-      background: #0b1220;
-      color: var(--text);
-      border:1px solid var(--line);
-      border-radius:10px;
-      padding:10px 12px;
+    header h1{font-size:16px;margin:0;font-weight:700;}
+    nav a{color:var(--text);text-decoration:none;border:1px solid var(--line);padding:8px 10px;border-radius:10px;}
+    nav a:hover{background:#fafafa;}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px;}
+    .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    input, select, button{
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);
       font-size:14px;
-      outline:none;
     }
-    button{
-      cursor:pointer;
-    }
-    button.primary{
-      background: linear-gradient(180deg, #2563eb, #1d4ed8);
-      border-color:#1e40af;
-    }
-    button.ghost{
-      background: transparent;
-    }
-    main{
-      max-width:1200px;
-      margin:0 auto;
-      padding:0 16px 24px;
-    }
-    .card{
-      background: linear-gradient(180deg, rgba(17,24,39,.9), rgba(15,23,42,.9));
-      border: 1px solid rgba(35,48,71,.9);
-      border-radius:16px;
-      overflow:hidden;
-      box-shadow: 0 12px 30px rgba(0,0,0,.25);
-    }
-    .cal-head{
-      padding:12px 14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      border-bottom:1px solid var(--line);
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .cal-head .left{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(7, 1fr);
-      border-top:1px solid var(--line);
-    }
-    .dow{
-      padding:10px 12px;
-      font-size:12px;
-      color:var(--muted);
-      background: rgba(11,18,32,.65);
-      border-bottom:1px solid var(--line);
-    }
-    .cell{
-      min-height:110px;
-      border-right:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      padding:10px 10px 12px;
-      position:relative;
-      cursor:pointer;
-      background: rgba(8,13,22,.35);
-      transition: transform .04s ease, background .12s ease;
-    }
-    .cell:hover{ background: rgba(8,13,22,.55); }
-    .cell:nth-child(7n){ border-right:none; }
-    .date-num{
-      font-size:12px;
-      color:var(--muted);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-    }
-    .pill{
-      font-size:11px;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background: rgba(11,18,32,.6);
-      color:var(--muted);
-      white-space:nowrap;
-    }
-    .summary{
-      margin-top:10px;
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-    }
-    .chip{
-      font-size:11px;
-      padding:4px 8px;
-      border-radius:999px;
-      background: rgba(11,18,32,.7);
-      border:1px solid rgba(35,48,71,.8);
-      color:var(--text);
-    }
-    .chip.good{ border-color: rgba(22,163,74,.55); color:#bbf7d0; }
-    .chip.bad{ border-color: rgba(185,28,28,.55); color:#fecaca; }
-    .chip.warn{ border-color: rgba(245,158,11,.55); color:#fde68a; }
-
-    /* Modal */
-    .modal-backdrop{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      z-index:1000;
-    }
-    .modal{
-      width:min(1100px, 100%);
-      max-height: 90vh;
-      overflow:auto;
-      border-radius:16px;
-      border:1px solid var(--line);
-      background: linear-gradient(180deg, rgba(17,24,39,.98), rgba(15,23,42,.98));
-      box-shadow: 0 24px 80px rgba(0,0,0,.45);
-    }
-    .modal-head{
-      padding:14px 14px;
-      border-bottom:1px solid var(--line);
-      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
-    }
-    .modal-head h2{ margin:0; font-size:16px; }
-    .modal-head .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-    .table{
-      width:100%;
-      border-collapse:collapse;
-    }
-    .table th, .table td{
-      border-bottom:1px solid rgba(35,48,71,.7);
-      padding:10px 10px;
-      vertical-align:top;
-      font-size:13px;
-    }
-    .table th{
-      position:sticky; top:0;
-      background: rgba(11,18,32,.95);
-      color:var(--muted);
-      text-align:left;
-      z-index:1;
-    }
-    .unit{
-      font-weight:600;
-      white-space:nowrap;
-    }
-    .status{
-      min-width:140px;
-    }
-    .small{
-      width:100%;
-      padding:8px 10px;
-      border-radius:10px;
-      font-size:13px;
-    }
-    .row-actions{
-      display:flex; gap:8px; align-items:center; justify-content:flex-end;
-      white-space:nowrap;
-    }
-    .hint{
-      padding:10px 14px;
-      color:var(--muted);
-      font-size:12px;
-      border-top:1px solid rgba(35,48,71,.65);
-      background: rgba(11,18,32,.35);
-    }
-    .kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      border:1px solid rgba(35,48,71,.85);
-      padding:2px 6px;
-      border-radius:8px;
-      background: rgba(11,18,32,.8);
-      color:var(--text);
-    }
+    button.primary{background:var(--btn);color:var(--btnText);border-color:var(--btn);}
+    table{width:100%;border-collapse:separate;border-spacing:0;}
+    th, td{border-bottom:1px solid var(--line);padding:10px;vertical-align:top;font-size:14px;}
+    th{position:sticky;top:56px;background:#fff;z-index:1;text-align:left;color:var(--muted);font-weight:700;}
+    td input, td select{width:100%;padding:8px 10px;border-radius:10px;}
+    .tiny{font-size:12px;color:var(--muted);}
+    .card{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px;}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+    @media(max-width:900px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+    @media(max-width:520px){ .grid{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
-<header>
-  <div class="title">
+  <header>
     <h1>Torre KBR Booking Admin</h1>
-    <p>2026 • Month view + click date to edit units • Auto-saves locally</p>
-  </div>
+    <nav>
+      <a href="./index.html">Calendar</a>
+      <a href="./guests.html">Guests</a>
+    </nav>
+  </header>
 
-  <div class="bar">
-    <select id="monthSelect" aria-label="Select month"></select>
-    <button class="ghost" id="prevBtn">◀ Prev</button>
-    <button class="ghost" id="nextBtn">Next ▶</button>
-    <button class="primary" id="exportBtn">Export JSON</button>
-    <button id="importBtn">Import JSON</button>
-    <input id="importFile" type="file" accept="application/json" style="display:none" />
-  </div>
-</header>
-
-<main>
-  <div class="card">
-    <div class="cal-head">
-      <div class="left" id="monthLabel"></div>
-      <div class="left">
-        Tip: click a date → edit units (D1..Room C)
+  <div class="wrap">
+    <div class="card">
+      <div class="grid">
+        <div>
+          <div class="tiny">Search (name/unit/date)</div>
+          <input id="q" placeholder="Type to search…" />
+        </div>
+        <div>
+          <div class="tiny">Status</div>
+          <select id="statusFilter">
+            <option value="ALL">ALL</option>
+            <option value="BOOKED">BOOKED</option>
+            <option value="HOLD">HOLD</option>
+          </select>
+        </div>
+        <div>
+          <div class="tiny">Quick add (optional)</div>
+          <button id="addRow" class="primary">Add guest row</button>
+        </div>
+        <div>
+          <div class="tiny">Export/Import (backup)</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="exportBtn">Export JSON</button>
+            <button id="importBtn">Import JSON</button>
+          </div>
+        </div>
+      </div>
+      <div class="tiny" style="margin-top:10px;">
+        Saves automatically to this browser. For shared multi-device saving, we can switch to Cloudflare KV/D1.
       </div>
     </div>
 
-    <div class="grid" id="dowRow"></div>
-    <div class="grid" id="calGrid"></div>
-  </div>
-</main>
-
-<!-- Modal -->
-<div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
-  <div class="modal">
-    <div class="modal-head">
-      <h2 id="modalTitle">Date</h2>
-      <div class="actions">
-        <button class="ghost" id="markAllAvailableBtn">Mark all Available</button>
-        <button class="ghost" id="clearDateBtn">Clear this date</button>
-        <button class="primary" id="closeModalBtn">Done</button>
-      </div>
-    </div>
-
-    <div style="padding: 0 10px 10px;">
-      <table class="table" id="unitTable">
+    <div style="overflow:auto;border:1px solid var(--line);border-radius:14px;">
+      <table id="tbl">
         <thead>
           <tr>
-            <th style="width:120px">Unit</th>
-            <th style="width:150px">Status</th>
-            <th style="width:220px">Guest name</th>
-            <th style="width:90px">Pax</th>
-            <th style="width:160px">Check-in</th>
-            <th style="width:160px">Check-out</th>
-            <th style="width:130px">Downpayment</th>
-            <th style="width:110px">Balance</th>
-            <th style="width:140px">M.O.P</th>
-            <th style="width:170px">Contact</th>
-            <th>Remarks</th>
-            <th style="width:90px"></th>
+            <th style="min-width:130px;">Date</th>
+            <th style="min-width:100px;">Unit</th>
+            <th style="min-width:110px;">Status</th>
+            <th style="min-width:220px;">Guest name</th>
+            <th style="min-width:110px;">Pax</th>
+            <th style="min-width:130px;">Check-in</th>
+            <th style="min-width:130px;">Check-out</th>
+            <th style="min-width:150px;">Contact no.</th>
+            <th style="min-width:220px;">Remarks</th>
+            <th style="min-width:90px;">Delete</th>
           </tr>
         </thead>
-        <tbody id="unitTbody"></tbody>
+        <tbody id="tbody"></tbody>
       </table>
     </div>
-
-    <div class="hint">
-      Auto-save is ON. Data is stored in this browser (LocalStorage). Use <span class="kbd">Export JSON</span> to backup/share.
-    </div>
   </div>
-</div>
 
 <script>
-  // ===== Config =====
-  const YEAR = 2026;
-  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
-  const STORAGE_KEY = "torreKBR_2026_bookings_v1";
+const STORAGE_KEY = "torreKBR_bookingDB_v1";
 
-  const STATUS_OPTIONS = [
-    { value:"AVAILABLE", label:"AVAILABLE" },
-    { value:"BOOKED", label:"BOOKED" },
-    { value:"HOLD", label:"HOLD" },
-    { value:"MAINTENANCE", label:"MAINTENANCE" }
-  ];
+const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C","ROOM D"];
+const STATUS = ["AVAILABLE","BOOKED","HOLD"];
 
-  // ===== State =====
-  let state = loadState(); // { "YYYY-MM-DD": { "D1": {status, guest, pax, ...}, ... } }
-  let currentMonth = 0; // Jan=0
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return { bookings:{} };
+    return JSON.parse(raw);
+  }catch(e){ return { bookings:{} }; }
+}
+function saveDB(db){ localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 
-  // ===== Elements =====
-  const monthSelect = document.getElementById("monthSelect");
-  const monthLabel  = document.getElementById("monthLabel");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const exportBtn = document.getElementById("exportBtn");
-  const importBtn = document.getElementById("importBtn");
-  const importFile = document.getElementById("importFile");
-
-  const dowRow = document.getElementById("dowRow");
-  const calGrid = document.getElementById("calGrid");
-
-  const modalBackdrop = document.getElementById("modalBackdrop");
-  const modalTitle = document.getElementById("modalTitle");
-  const unitTbody = document.getElementById("unitTbody");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const clearDateBtn = document.getElementById("clearDateBtn");
-  const markAllAvailableBtn = document.getElementById("markAllAvailableBtn");
-
-  let openDateKey = null;
-
-  // ===== Init =====
-  initMonthSelect();
-  initDow();
-  render();
-
-  prevBtn.addEventListener("click", () => {
-    currentMonth = (currentMonth + 11) % 12;
-    monthSelect.value = String(currentMonth);
-    render();
-  });
-  nextBtn.addEventListener("click", () => {
-    currentMonth = (currentMonth + 1) % 12;
-    monthSelect.value = String(currentMonth);
-    render();
-  });
-  monthSelect.addEventListener("change", (e) => {
-    currentMonth = Number(e.target.value);
-    render();
-  });
-
-  exportBtn.addEventListener("click", exportJSON);
-  importBtn.addEventListener("click", () => importFile.click());
-  importFile.addEventListener("change", importJSON);
-
-  closeModalBtn.addEventListener("click", closeModal);
-  modalBackdrop.addEventListener("click", (e) => {
-    if (e.target === modalBackdrop) closeModal();
-  });
-
-  clearDateBtn.addEventListener("click", () => {
-    if (!openDateKey) return;
-    if (!confirm(`Clear all entries for ${openDateKey}?`)) return;
-    delete state[openDateKey];
-    saveState(state);
-    openDate(openDateKey); // refresh modal
-    render(); // refresh calendar
-  });
-
-  markAllAvailableBtn.addEventListener("click", () => {
-    if (!openDateKey) return;
-    ensureDate(openDateKey);
-    for (const u of UNITS) {
-      state[openDateKey][u] = state[openDateKey][u] || blankUnit();
-      state[openDateKey][u].status = "AVAILABLE";
-      // keep guest name etc. (don’t wipe)
-    }
-    saveState(state);
-    openDate(openDateKey);
-    render();
-  });
-
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeModal();
-  });
-
-  // ===== Functions =====
-  function initMonthSelect(){
-    const months = [
-      "January","February","March","April","May","June",
-      "July","August","September","October","November","December"
-    ];
-    months.forEach((m, idx) => {
-      const opt = document.createElement("option");
-      opt.value = String(idx);
-      opt.textContent = `${m} ${YEAR}`;
-      monthSelect.appendChild(opt);
-    });
-    monthSelect.value = String(currentMonth);
-  }
-
-  function initDow(){
-    const dows = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    dows.forEach(d => {
-      const div = document.createElement("div");
-      div.className = "dow";
-      div.textContent = d;
-      dowRow.appendChild(div);
-    });
-  }
-
-  function render(){
-    const first = new Date(Date.UTC(YEAR, currentMonth, 1));
-    const monthName = first.toLocaleString(undefined, { month:"long" });
-    monthLabel.textContent = `${monthName} ${YEAR}`;
-
-    calGrid.innerHTML = "";
-
-    const startDow = first.getUTCDay();
-    const daysInMonth = new Date(Date.UTC(YEAR, currentMonth + 1, 0)).getUTCDate();
-
-    // Padding cells (previous month blanks)
-    for (let i=0; i<startDow; i++){
-      calGrid.appendChild(blankCell());
-    }
-
-    // Month cells
-    for (let day=1; day<=daysInMonth; day++){
-      const dateKey = toKeyUTC(YEAR, currentMonth, day);
-      calGrid.appendChild(dayCell(day, dateKey));
-    }
-
-    // Padding to complete rows
-    const totalCells = startDow + daysInMonth;
-    const pad = (7 - (totalCells % 7)) % 7;
-    for (let i=0; i<pad; i++){
-      calGrid.appendChild(blankCell());
-    }
-  }
-
-  function blankCell(){
-    const div = document.createElement("div");
-    div.className = "cell";
-    div.style.cursor = "default";
-    div.style.opacity = "0.35";
-    div.addEventListener("click", (e) => e.stopPropagation());
-    div.innerHTML = `<div class="date-num"><span></span></div>`;
-    return div;
-  }
-
-  function dayCell(day, dateKey){
-    const div = document.createElement("div");
-    div.className = "cell";
-    div.addEventListener("click", () => openDate(dateKey));
-
-    const summary = summarizeDay(dateKey); // {booked, hold, maintenance}
-    const pills = [];
-    if (summary.booked > 0) pills.push(`<span class="chip bad">${summary.booked} BOOKED</span>`);
-    if (summary.hold > 0) pills.push(`<span class="chip warn">${summary.hold} HOLD</span>`);
-    if (summary.maintenance > 0) pills.push(`<span class="chip warn">${summary.maintenance} MAINT</span>`);
-    if (pills.length === 0) pills.push(`<span class="chip good">All Available</span>`);
-
-    div.innerHTML = `
-      <div class="date-num">
-        <span>${day}</span>
-        <span class="pill">${dateKey}</span>
-      </div>
-      <div class="summary">${pills.join("")}</div>
-    `;
-    return div;
-  }
-
-  function summarizeDay(dateKey){
-    const d = state[dateKey];
-    if (!d) return { booked:0, hold:0, maintenance:0 };
-
-    let booked=0, hold=0, maintenance=0;
-    for (const u of UNITS){
-      const row = d[u];
-      if (!row) continue;
-      if (row.status === "BOOKED") booked++;
-      if (row.status === "HOLD") hold++;
-      if (row.status === "MAINTENANCE") maintenance++;
-    }
-    return { booked, hold, maintenance };
-  }
-
-  function openDate(dateKey){
-    openDateKey = dateKey;
-    ensureDate(dateKey);
-
-    modalTitle.textContent = `Edit bookings — ${dateKey}`;
-    unitTbody.innerHTML = "";
-
-    for (const unit of UNITS){
-      const data = state[dateKey][unit] || blankUnit();
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td class="unit">${unit}</td>
-        <td class="status"></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td class="row-actions"></td>
-      `;
-
-      // Status select
-      const statusSel = document.createElement("select");
-      statusSel.className = "small";
-      STATUS_OPTIONS.forEach(o => {
-        const opt = document.createElement("option");
-        opt.value = o.value;
-        opt.textContent = o.label;
-        statusSel.appendChild(opt);
-      });
-      statusSel.value = data.status || "AVAILABLE";
-      statusSel.addEventListener("change", () => {
-        updateUnit(dateKey, unit, { status: statusSel.value });
-      });
-      tr.children[1].appendChild(statusSel);
-
-      // Guest
-      const guest = inputSmall(data.guest || "", "Guest name");
-      guest.addEventListener("input", () => updateUnit(dateKey, unit, { guest: guest.value }));
-      tr.children[2].appendChild(guest);
-
-      // Pax
-      const pax = inputSmall(data.pax || "", "Pax");
-      pax.inputMode = "numeric";
-      pax.addEventListener("input", () => updateUnit(dateKey, unit, { pax: pax.value }));
-      tr.children[3].appendChild(pax);
-
-      // Check-in/out
-      const cin = inputSmall(data.checkin || "", "YYYY-MM-DD / time");
-      cin.addEventListener("input", () => updateUnit(dateKey, unit, { checkin: cin.value }));
-      tr.children[4].appendChild(cin);
-
-      const cout = inputSmall(data.checkout || "", "YYYY-MM-DD / time");
-      cout.addEventListener("input", () => updateUnit(dateKey, unit, { checkout: cout.value }));
-      tr.children[5].appendChild(cout);
-
-      // Payments
-      const dp = inputSmall(data.downpayment || "", "Downpayment");
-      dp.addEventListener("input", () => updateUnit(dateKey, unit, { downpayment: dp.value }));
-      tr.children[6].appendChild(dp);
-
-      const bal = inputSmall(data.balance || "", "Balance");
-      bal.addEventListener("input", () => updateUnit(dateKey, unit, { balance: bal.value }));
-      tr.children[7].appendChild(bal);
-
-      const mop = inputSmall(data.mop || "", "GCash/Cash/Bank...");
-      mop.addEventListener("input", () => updateUnit(dateKey, unit, { mop: mop.value }));
-      tr.children[8].appendChild(mop);
-
-      const contact = inputSmall(data.contact || "", "Contact no.");
-      contact.addEventListener("input", () => updateUnit(dateKey, unit, { contact: contact.value }));
-      tr.children[9].appendChild(contact);
-
-      const remarks = inputSmall(data.remarks || "", "Remarks");
-      remarks.addEventListener("input", () => updateUnit(dateKey, unit, { remarks: remarks.value }));
-      tr.children[10].appendChild(remarks);
-
-      // Row actions
-      const quickAvail = document.createElement("button");
-      quickAvail.className = "ghost";
-      quickAvail.textContent = "Available";
-      quickAvail.addEventListener("click", () => {
-        updateUnit(dateKey, unit, { status:"AVAILABLE" });
-        openDate(dateKey);
-        render();
-      });
-
-      const quickBooked = document.createElement("button");
-      quickBooked.className = "ghost";
-      quickBooked.textContent = "Booked";
-      quickBooked.addEventListener("click", () => {
-        updateUnit(dateKey, unit, { status:"BOOKED" });
-        openDate(dateKey);
-        render();
-      });
-
-      const clearRow = document.createElement("button");
-      clearRow.className = "ghost";
-      clearRow.textContent = "Clear";
-      clearRow.addEventListener("click", () => {
-        if (!confirm(`Clear ${unit} on ${dateKey}?`)) return;
-        ensureDate(dateKey);
-        state[dateKey][unit] = blankUnit();
-        saveState(state);
-        openDate(dateKey);
-        render();
-      });
-
-      tr.children[11].appendChild(quickAvail);
-      tr.children[11].appendChild(quickBooked);
-      tr.children[11].appendChild(clearRow);
-
-      unitTbody.appendChild(tr);
-    }
-
-    modalBackdrop.style.display = "flex";
-  }
-
-  function closeModal(){
-    modalBackdrop.style.display = "none";
-    openDateKey = null;
-  }
-
-  function inputSmall(value, placeholder){
-    const el = document.createElement("input");
-    el.className = "small";
-    el.value = value;
-    el.placeholder = placeholder;
-    return el;
-  }
-
-  function blankUnit(){
-    return {
-      status:"AVAILABLE",
+function ensureDayUnit(db, iso, unit){
+  if(!db.bookings[iso]) db.bookings[iso] = {};
+  if(!db.bookings[iso][unit]){
+    db.bookings[iso][unit] = {
+      status:"BOOKED",
       guest:"",
       pax:"",
       checkin:"",
       checkout:"",
-      downpayment:"",
-      balance:"",
-      mop:"",
       contact:"",
       remarks:""
     };
+  }else{
+    // add missing fields if older data
+    const o = db.bookings[iso][unit];
+    if(o.pax===undefined) o.pax="";
+    if(o.checkin===undefined) o.checkin="";
+    if(o.checkout===undefined) o.checkout="";
+    if(o.contact===undefined) o.contact="";
+    if(o.remarks===undefined) o.remarks="";
   }
+  return db.bookings[iso][unit];
+}
 
-  function ensureDate(dateKey){
-    if (!state[dateKey]) state[dateKey] = {};
-    for (const u of UNITS){
-      if (!state[dateKey][u]) state[dateKey][u] = blankUnit();
+function allRows(db){
+  const rows = [];
+  for(const iso of Object.keys(db.bookings)){
+    const day = db.bookings[iso];
+    for(const unit of Object.keys(day)){
+      const rec = ensureDayUnit(db, iso, unit);
+      rows.push({ iso, unit, ...rec });
     }
   }
+  // sort by date then unit
+  rows.sort((a,b)=> a.iso.localeCompare(b.iso) || a.unit.localeCompare(b.unit));
+  return rows;
+}
 
-  function updateUnit(dateKey, unit, patch){
-    ensureDate(dateKey);
-    state[dateKey][unit] = state[dateKey][unit] || blankUnit();
-    state[dateKey][unit] = { ...state[dateKey][unit], ...patch };
-    saveState(state);
-    // no forced re-render on every keypress (smooth), calendar refresh happens when modal closes or buttons used
-  }
+let db = loadDB();
+saveDB(db);
 
-  function toKeyUTC(y, m, d){
-    const mm = String(m+1).padStart(2,"0");
-    const dd = String(d).padStart(2,"0");
-    return `${y}-${mm}-${dd}`;
-  }
+const tbody = document.getElementById("tbody");
+const q = document.getElementById("q");
+const statusFilter = document.getElementById("statusFilter");
 
-  function loadState(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return {};
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return {};
-      return parsed;
-    }catch{
-      return {};
-    }
-  }
+function render(){
+  const rows = allRows(db);
+  const query = (q.value||"").trim().toLowerCase();
+  const sf = statusFilter.value;
 
-  function saveState(s){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  }
+  const filtered = rows.filter(r=>{
+    // show only booked/hold by default
+    const defaultShow = (r.status==="BOOKED" || r.status==="HOLD");
+    const statusOk = (sf==="ALL" ? defaultShow : r.status===sf);
+    if(!statusOk) return false;
 
-  function exportJSON(){
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `torre-kbr-bookings-${YEAR}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+    if(!query) return true;
+    const hay = `${r.iso} ${r.unit} ${r.status} ${r.guest} ${r.contact} ${r.remarks}`.toLowerCase();
+    return hay.includes(query);
+  });
 
-  async function importJSON(e){
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try{
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      if (!parsed || typeof parsed !== "object") throw new Error("Invalid JSON");
-      if (!confirm("Import will overwrite your current data in this browser. Continue?")) return;
-      state = parsed;
-      saveState(state);
+  tbody.innerHTML = "";
+  for(const r of filtered){
+    const tr = document.createElement("tr");
+
+    // Date
+    const tdDate = document.createElement("td");
+    const inDate = document.createElement("input");
+    inDate.type="date";
+    inDate.value = r.iso;
+    tdDate.appendChild(inDate);
+
+    // Unit
+    const tdUnit = document.createElement("td");
+    const selUnit = document.createElement("select");
+    UNITS.forEach(u=>{
+      const opt=document.createElement("option");
+      opt.value=u; opt.textContent=u;
+      selUnit.appendChild(opt);
+    });
+    selUnit.value = r.unit;
+    tdUnit.appendChild(selUnit);
+
+    // Status
+    const tdStatus = document.createElement("td");
+    const selStatus = document.createElement("select");
+    STATUS.forEach(s=>{
+      const opt=document.createElement("option");
+      opt.value=s; opt.textContent=s;
+      selStatus.appendChild(opt);
+    });
+    selStatus.value = r.status;
+    tdStatus.appendChild(selStatus);
+
+    // Guest
+    const tdGuest = document.createElement("td");
+    const inGuest = document.createElement("input");
+    inGuest.value = r.guest || "";
+    tdGuest.appendChild(inGuest);
+
+    // Pax
+    const tdPax = document.createElement("td");
+    const inPax = document.createElement("input");
+    inPax.value = r.pax || "";
+    inPax.placeholder="e.g. 2";
+    tdPax.appendChild(inPax);
+
+    // Check-in
+    const tdCin = document.createElement("td");
+    const inCin = document.createElement("input");
+    inCin.type="date";
+    inCin.value = r.checkin || "";
+    tdCin.appendChild(inCin);
+
+    // Check-out
+    const tdCout = document.createElement("td");
+    const inCout = document.createElement("input");
+    inCout.type="date";
+    inCout.value = r.checkout || "";
+    tdCout.appendChild(inCout);
+
+    // Contact
+    const tdContact = document.createElement("td");
+    const inContact = document.createElement("input");
+    inContact.value = r.contact || "";
+    tdContact.appendChild(inContact);
+
+    // Remarks
+    const tdRemarks = document.createElement("td");
+    const inRemarks = document.createElement("input");
+    inRemarks.value = r.remarks || "";
+    tdRemarks.appendChild(inRemarks);
+
+    // Delete
+    const tdDel = document.createElement("td");
+    const btnDel = document.createElement("button");
+    btnDel.textContent="Delete";
+    tdDel.appendChild(btnDel);
+
+    const writeBack = ()=>{
+      // remove old key
+      if(db.bookings[r.iso] && db.bookings[r.iso][r.unit]){
+        delete db.bookings[r.iso][r.unit];
+        if(Object.keys(db.bookings[r.iso]).length===0) delete db.bookings[r.iso];
+      }
+
+      const newIso = inDate.value || r.iso;
+      const newUnit = selUnit.value || r.unit;
+
+      const rec = ensureDayUnit(db, newIso, newUnit);
+      rec.status = selStatus.value;
+      rec.guest = inGuest.value;
+      rec.pax = inPax.value;
+      rec.checkin = inCin.value;
+      rec.checkout = inCout.value;
+      rec.contact = inContact.value;
+      rec.remarks = inRemarks.value;
+
+      saveDB(db);
+      // re-render to reflect moved date/unit
       render();
-      alert("Imported successfully.");
-    }catch(err){
-      alert("Import failed: " + (err?.message || "Unknown error"));
-    }finally{
-      importFile.value = "";
-    }
+    };
+
+    [inDate, selUnit, selStatus, inGuest, inPax, inCin, inCout, inContact, inRemarks].forEach(el=>{
+      el.addEventListener("change", writeBack);
+      el.addEventListener("input", ()=>{ saveDB(db); }); // light save while typing
+      el.addEventListener("blur", writeBack);
+    });
+
+    btnDel.addEventListener("click", ()=>{
+      if(!confirm("Delete this guest row?")) return;
+      if(db.bookings[r.iso] && db.bookings[r.iso][r.unit]){
+        delete db.bookings[r.iso][r.unit];
+        if(Object.keys(db.bookings[r.iso]).length===0) delete db.bookings[r.iso];
+        saveDB(db);
+        render();
+      }
+    });
+
+    [tdDate,tdUnit,tdStatus,tdGuest,tdPax,tdCin,tdCout,tdContact,tdRemarks,tdDel].forEach(td=>tr.appendChild(td));
+    tbody.appendChild(tr);
   }
+}
+
+q.addEventListener("input", render);
+statusFilter.addEventListener("change", render);
+
+document.getElementById("addRow").addEventListener("click", ()=>{
+  // add a default row (Jan 1, 2026, D1 booked)
+  const iso = "2026-01-01";
+  const unit = "D1";
+  const rec = ensureDayUnit(db, iso, unit);
+  rec.status = "BOOKED";
+  rec.guest = rec.guest || "";
+  saveDB(db);
+  render();
+});
+
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob = new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "torre-kbr-bookings-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importBtn").addEventListener("click", ()=>{
+  const inp = document.createElement("input");
+  inp.type="file";
+  inp.accept="application/json";
+  inp.onchange = async ()=>{
+    const file = inp.files?.[0];
+    if(!file) return;
+    const text = await file.text();
+    try{
+      const data = JSON.parse(text);
+      if(!data || typeof data!=="object" || !data.bookings) throw new Error("Invalid file");
+      db = data;
+      saveDB(db);
+      render();
+      alert("Imported ✅");
+    }catch(e){
+      alert("Import failed. Please use the exported JSON format.");
+    }
+  };
+  inp.click();
+});
+
+render();
 </script>
 </body>
 </html>
