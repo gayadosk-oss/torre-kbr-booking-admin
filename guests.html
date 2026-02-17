@@ -164,7 +164,6 @@
       line-height:1.15;
     }
     .miniBtn.primary{background:var(--accent);color:#fff;border-color:transparent}
-    .miniBtn.danger{background:var(--dangerBg);border-color:var(--dangerBd);color:#991b1b}
     .miniBtn:active{transform:translateY(1px)}
 
     .footerNote{margin-top:10px; color:var(--muted); font-size:12px; text-align:center}
@@ -241,9 +240,10 @@
       padding-bottom:14px;
     }
 
+    /* ✅ FIX: make left panel wider and readable */
     .modalBodySplit{
       display:grid;
-      grid-template-columns: 1fr 1.4fr;
+      grid-template-columns: minmax(280px, 360px) 1fr;
       gap:14px;
       margin-top:10px;
     }
@@ -278,37 +278,47 @@
       overflow:auto;
       -webkit-overflow-scrolling:touch;
     }
+
+    /* ✅ FIX: entry row layout (readable text + View button) */
     .entryItem{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      display:grid;
+      grid-template-columns: 1fr auto;
       gap:10px;
       padding:10px 12px;
       border-bottom:1px solid var(--border);
+      align-items:center;
       min-width:0;
+      cursor:pointer;
     }
     .entryItem:last-child{border-bottom:none}
+    .entryItem.active{
+      background:var(--soft);
+      outline:2px solid rgba(37,99,235,.12);
+    }
+
     .entryLeft{
       display:flex;
       flex-direction:column;
-      gap:2px;
+      gap:4px;
       min-width:0;
     }
-    .entryUnit{font-weight:950;font-size:13px}
+    .entryUnit{
+      font-weight:950;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+
+    /* ✅ FIX: allow wrapping and show more info */
     .entryMeta{
       font-size:12px;
       color:var(--muted);
-      white-space:nowrap;
+      white-space:normal;
       overflow:hidden;
       text-overflow:ellipsis;
-      max-width:320px;
-    }
-    .entryRight{
-      display:flex;
-      gap:8px;
-      flex-shrink:0;
-      flex-wrap:wrap;
-      justify-content:flex-end;
+      display:-webkit-box;
+      -webkit-line-clamp:3;
+      -webkit-box-orient:vertical;
+      line-height:1.25;
     }
 
     .formGrid{
@@ -364,7 +374,6 @@
 
       .entryListHeader .miniBtn{width:100%}
       .actionsRow .miniBtn{width:100%}
-      .entryRight .miniBtn{width:100%}
     }
     @media (max-width:640px){
       input{min-width:180px}
@@ -422,7 +431,7 @@
     <div class="modalHeader">
       <div>
         <strong id="modalTitle">Guest Details</strong>
-        <div class="small" id="modalSub">Choose an entry to view. Tap Edit to modify. + New entry to add.</div>
+        <div class="small" id="modalSub">Choose an entry on the left to view. Tap Edit to modify. + New entry to add.</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <div style="display:flex;gap:8px;align-items:center">
@@ -499,7 +508,8 @@
           </div>
 
           <div class="modalActions">
-            <button class="btn danger" id="deleteBtn" type="button">Delete Entry</button>
+            <!-- ✅ Delete is hidden until you click View on left list -->
+            <button class="btn danger" id="deleteBtn" type="button" style="display:none;">Delete Entry</button>
             <button class="btn" id="toggleEditBtn" type="button">Edit</button>
             <button class="btn" id="cancelBtn" type="button">Close</button>
             <button class="btn primary" id="saveBtn" type="button">Save</button>
@@ -614,11 +624,9 @@
   }
 
   async function initLoad(){
-    // 1) show local immediately
     data = loadLocal();
     render();
 
-    // 2) fetch cloud and override if present
     try{
       setSync("Loading from Google Sheets…");
       const cloud = await apiGet(TAB_NAME, CLOUD_KEY);
@@ -792,17 +800,26 @@
     window.scrollTo(0, y || 0);
   }
 
-  // ===== Modal logic (View/Edit + autosave) =====
+  // ===== Modal logic =====
   let activeDate = null;
   let activeEditUnit = null;
   let isEditMode = false;
   let saveTimer = null;
+
+  // ✅ Delete button appears ONLY after clicking View from left panel
+  let hasViewedSelection = false;
 
   function initUnitSelect(){
     unitSelectEl.innerHTML = `<option value="">— Select —</option>` +
       UNITS.map(u => `<option value="${escapeAttr(u)}">${escapeHtml(u)}</option>`).join("");
   }
   initUnitSelect();
+
+  function updateDeleteVisibility(){
+    const show = !!(activeDate && activeEditUnit && hasViewedSelection);
+    deleteBtn.style.display = show ? "inline-flex" : "none";
+    deleteBtn.disabled = !show;
+  }
 
   function setEditMode(on){
     isEditMode = !!on;
@@ -814,9 +831,6 @@
     modePill.classList.toggle("edit", isEditMode);
 
     toggleEditBtn.textContent = isEditMode ? "Done" : "Edit";
-
-    // Delete button only enabled when there is a selected saved entry
-    deleteBtn.disabled = !(activeDate && activeEditUnit);
     if (!isEditMode) showSaved();
   }
 
@@ -828,30 +842,31 @@
   function openGuestModal(dateStr){
     activeDate = dateStr;
     activeEditUnit = null;
+    hasViewedSelection = false; // reset per open
 
     modalTitle.textContent = `Guest Details • ${dateStr}`;
-    modalSub.textContent = `Choose an entry to view. Tap Edit to modify. + New entry to add.`;
+    modalSub.textContent = `Choose an entry on the left to view. Tap Edit to modify. + New entry to add.`;
     showSaved();
 
     lockBodyScroll();
     modalOverlay.style.display = "flex";
     modalOverlay.scrollTop = 0;
 
+    clearForm();
+    setEditMode(false);
+    updateDeleteVisibility();
+
     renderEntriesList();
+    refreshUnitSelectOptions();
 
+    // If no entries, go straight to new entry mode
     const entries = getEntriesForDate(dateStr);
-    const savedUnits = Object.keys(entries).filter(u => hasAnyField(entries[u])).sort((a,b)=>a.localeCompare(b));
-
-    if (savedUnits.length){
-      loadEntry(savedUnits[0]);
-      setEditMode(false);
-    } else {
+    const savedUnits = Object.keys(entries).filter(u => hasAnyField(entries[u]));
+    if (!savedUnits.length){
       startNewEntry();
       setEditMode(true);
+      modalSub.textContent = `No entries yet. Fill out details and tap Save.`;
     }
-
-    refreshUnitSelectOptions();
-    deleteBtn.disabled = !(activeDate && activeEditUnit);
   }
 
   function closeModal(){
@@ -859,7 +874,9 @@
     unlockBodyScroll();
     activeDate = null;
     activeEditUnit = null;
+    hasViewedSelection = false;
     setEditMode(false);
+    updateDeleteVisibility();
   }
 
   closeModalBtn.addEventListener("click", closeModal);
@@ -869,6 +886,8 @@
   addNewBtn.addEventListener("click", () => {
     startNewEntry();
     setEditMode(true);
+    hasViewedSelection = false;
+    updateDeleteVisibility();
   });
 
   function renderEntriesList(){
@@ -888,34 +907,41 @@
 
     entryItems.innerHTML = units.map(u=>{
       const e = entries[u] || {};
-      const meta = `${e.guestName || "—"} • Pax ${e.pax || "—"} • ${e.checkin || "—"} → ${e.checkout || "—"}`;
+      const guest = (e.guestName || "—").trim();
+      const pax = (e.pax || "—").trim();
+      const time = `${(e.checkin || "—").trim()} → ${(e.checkout || "—").trim()}`;
+      const meta = `${guest} • Pax ${pax}\n${time}`;
+      const activeClass = (activeEditUnit === u) ? "active" : "";
       return `
-        <div class="entryItem">
+        <div class="entryItem ${activeClass}" data-row="${escapeAttr(u)}">
           <div class="entryLeft">
-            <div class="entryUnit">${escapeHtml(u)}</div>
-            <div class="entryMeta">${escapeHtml(meta)}</div>
+            <div class="entryUnit">Unit: ${escapeHtml(u)}</div>
+            <div class="entryMeta">${escapeHtml(meta).replaceAll("\n","<br/>")}</div>
           </div>
-          <div class="entryRight">
-            <button class="miniBtn" type="button" data-view="${escapeAttr(u)}">View</button>
-            <button class="miniBtn danger" type="button" data-del="${escapeAttr(u)}">Delete</button>
-          </div>
+          <button class="miniBtn" type="button" data-view="${escapeAttr(u)}">View</button>
         </div>
       `;
     }).join("");
 
     entryItems.querySelectorAll("[data-view]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
+      btn.addEventListener("click", (e)=>{
+        e.stopPropagation();
         const u = btn.getAttribute("data-view");
-        loadEntry(u);
+        loadEntry(u, { fromListClick:true });
         setEditMode(false);
         refreshUnitSelectOptions();
+        renderEntriesList(); // refresh highlight
       });
     });
 
-    entryItems.querySelectorAll("[data-del]").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        const u = btn.getAttribute("data-del");
-        await deleteEntryForUnit(u);
+    // allow clicking row (not just button) to View
+    entryItems.querySelectorAll("[data-row]").forEach(row=>{
+      row.addEventListener("click", ()=>{
+        const u = row.getAttribute("data-row");
+        loadEntry(u, { fromListClick:true });
+        setEditMode(false);
+        refreshUnitSelectOptions();
+        renderEntriesList();
       });
     });
   }
@@ -938,11 +964,12 @@
     activeEditUnit = null;
     clearForm();
     refreshUnitSelectOptions();
-    deleteBtn.disabled = true;
+    hasViewedSelection = false;
+    updateDeleteVisibility();
     guestNameEl.focus();
   }
 
-  function loadEntry(unit){
+  function loadEntry(unit, opts = {}){
     const entries = getEntriesForDate(activeDate);
     const e = entries[unit];
     if (!e) return;
@@ -961,7 +988,10 @@
     contactEl.value = e.contact || "";
     remarksEl.value = e.remarks || "";
 
-    deleteBtn.disabled = false;
+    if (opts.fromListClick){
+      hasViewedSelection = true; // ✅ show delete only after list click
+    }
+    updateDeleteVisibility();
   }
 
   function refreshUnitSelectOptions(){
@@ -1050,7 +1080,6 @@
       entries[unit] = payload;
       if (!activeEditUnit) activeEditUnit = unit;
     } else {
-      // if user clears everything and saves, delete
       delete entries[unit];
       if (activeEditUnit === unit) activeEditUnit = null;
     }
@@ -1064,10 +1093,9 @@
     render();
     renderEntriesList();
     refreshUnitSelectOptions();
-    deleteBtn.disabled = !(activeDate && activeEditUnit);
+    updateDeleteVisibility();
   }
 
-  // ✅ Dedicated delete entry action
   async function deleteEntryForUnit(unit){
     if (!activeDate) return;
     if (!unit) return;
@@ -1084,20 +1112,15 @@
     }
 
     showSaving();
-
-    // Delete the unit entry
     delete entries[unit];
 
-    // If date is empty after deletion, remove the date
     const stillHasAny = Object.keys(entries).some(u => entries[u] && hasAnyField(entries[u]));
     if (!stillHasAny) delete data[activeDate];
 
-    // If we were viewing this unit, reset form
-    if (activeEditUnit === unit){
-      activeEditUnit = null;
-      clearForm();
-      deleteBtn.disabled = true;
-    }
+    activeEditUnit = null;
+    hasViewedSelection = false;
+    clearForm();
+    updateDeleteVisibility();
 
     persistSoon();
 
@@ -1105,25 +1128,11 @@
     render();
     renderEntriesList();
     refreshUnitSelectOptions();
-
-    // Auto-load another remaining entry (nice UX)
-    const remaining = activeDate && data[activeDate] && data[activeDate].entries
-      ? Object.keys(data[activeDate].entries).filter(u => hasAnyField(data[activeDate].entries[u])).sort()
-      : [];
-
-    if (remaining.length){
-      loadEntry(remaining[0]);
-      setEditMode(false);
-    } else {
-      startNewEntry();
-      setEditMode(true);
-    }
   }
 
-  // Delete button in footer (deletes current selected entry)
   deleteBtn.addEventListener("click", async () => {
-    if (!activeDate || !activeEditUnit){
-      alert("Please select a saved entry first (click View on the left).");
+    if (!activeDate || !activeEditUnit || !hasViewedSelection){
+      alert("Please click View on the left side first.");
       return;
     }
     await deleteEntryForUnit(activeEditUnit);
