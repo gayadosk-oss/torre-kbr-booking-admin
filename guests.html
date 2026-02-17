@@ -164,6 +164,7 @@
       line-height:1.15;
     }
     .miniBtn.primary{background:var(--accent);color:#fff;border-color:transparent}
+    .miniBtn.danger{background:var(--dangerBg);border-color:var(--dangerBd);color:#991b1b}
     .miniBtn:active{transform:translateY(1px)}
 
     .footerNote{margin-top:10px; color:var(--muted); font-size:12px; text-align:center}
@@ -306,6 +307,8 @@
       display:flex;
       gap:8px;
       flex-shrink:0;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     .formGrid{
@@ -361,6 +364,7 @@
 
       .entryListHeader .miniBtn{width:100%}
       .actionsRow .miniBtn{width:100%}
+      .entryRight .miniBtn{width:100%}
     }
     @media (max-width:640px){
       input{min-width:180px}
@@ -495,6 +499,7 @@
           </div>
 
           <div class="modalActions">
+            <button class="btn danger" id="deleteBtn" type="button">Delete Entry</button>
             <button class="btn" id="toggleEditBtn" type="button">Edit</button>
             <button class="btn" id="cancelBtn" type="button">Close</button>
             <button class="btn primary" id="saveBtn" type="button">Save</button>
@@ -502,7 +507,6 @@
 
           <div class="small">
             Rule: One entry per unit per date. Units already used are disabled when adding new.
-            (No Clear/Delete buttons to prevent accidental loss.)
           </div>
 
           <div class="small" id="syncStatus">Loading from Google Sheets…</div>
@@ -543,6 +547,7 @@
   const closeModalBtn = document.getElementById("closeModalBtn");
   const cancelBtn    = document.getElementById("cancelBtn");
   const saveBtn      = document.getElementById("saveBtn");
+  const deleteBtn    = document.getElementById("deleteBtn");
   const savePill     = document.getElementById("savePill");
   const syncStatus   = document.getElementById("syncStatus");
 
@@ -608,10 +613,6 @@
     }
   }
 
-  async function loadCloud(){
-    return await apiGet(TAB_NAME, CLOUD_KEY);
-  }
-
   async function initLoad(){
     // 1) show local immediately
     data = loadLocal();
@@ -620,7 +621,7 @@
     // 2) fetch cloud and override if present
     try{
       setSync("Loading from Google Sheets…");
-      const cloud = await loadCloud();
+      const cloud = await apiGet(TAB_NAME, CLOUD_KEY);
       if (cloud && typeof cloud === "object"){
         data = cloud;
         try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
@@ -635,7 +636,7 @@
     }
   }
 
-  // Debounced persist (prevents spamming Apps Script)
+  // Debounced persist
   let __persistTimer = null;
   function persistSoon(){
     clearTimeout(__persistTimer);
@@ -643,10 +644,7 @@
   }
 
   async function persist(){
-    // local always
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
-
-    // cloud
     try{
       setSync("Saving to Google Sheets…");
       await apiSet(TAB_NAME, CLOUD_KEY, data);
@@ -816,6 +814,9 @@
     modePill.classList.toggle("edit", isEditMode);
 
     toggleEditBtn.textContent = isEditMode ? "Done" : "Edit";
+
+    // Delete button only enabled when there is a selected saved entry
+    deleteBtn.disabled = !(activeDate && activeEditUnit);
     if (!isEditMode) showSaved();
   }
 
@@ -850,6 +851,7 @@
     }
 
     refreshUnitSelectOptions();
+    deleteBtn.disabled = !(activeDate && activeEditUnit);
   }
 
   function closeModal(){
@@ -895,6 +897,7 @@
           </div>
           <div class="entryRight">
             <button class="miniBtn" type="button" data-view="${escapeAttr(u)}">View</button>
+            <button class="miniBtn danger" type="button" data-del="${escapeAttr(u)}">Delete</button>
           </div>
         </div>
       `;
@@ -906,6 +909,13 @@
         loadEntry(u);
         setEditMode(false);
         refreshUnitSelectOptions();
+      });
+    });
+
+    entryItems.querySelectorAll("[data-del]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const u = btn.getAttribute("data-del");
+        await deleteEntryForUnit(u);
       });
     });
   }
@@ -928,6 +938,7 @@
     activeEditUnit = null;
     clearForm();
     refreshUnitSelectOptions();
+    deleteBtn.disabled = true;
     guestNameEl.focus();
   }
 
@@ -949,6 +960,8 @@
     mopEl.value = e.mop || "";
     contactEl.value = e.contact || "";
     remarksEl.value = e.remarks || "";
+
+    deleteBtn.disabled = false;
   }
 
   function refreshUnitSelectOptions(){
@@ -1037,6 +1050,7 @@
       entries[unit] = payload;
       if (!activeEditUnit) activeEditUnit = unit;
     } else {
+      // if user clears everything and saves, delete
       delete entries[unit];
       if (activeEditUnit === unit) activeEditUnit = null;
     }
@@ -1044,14 +1058,76 @@
     const stillHasAny = Object.keys(entries).some(u => entries[u] && hasAnyField(entries[u]));
     if (!stillHasAny) delete data[activeDate];
 
-    // ✅ Save locally + Google Sheets (debounced)
     persistSoon();
 
     showSaved();
     render();
     renderEntriesList();
     refreshUnitSelectOptions();
+    deleteBtn.disabled = !(activeDate && activeEditUnit);
   }
+
+  // ✅ Dedicated delete entry action
+  async function deleteEntryForUnit(unit){
+    if (!activeDate) return;
+    if (!unit) return;
+
+    const ok = confirm(`Delete entry for ${unit} on ${activeDate}?\n\nThis will remove it from Google Sheets and all devices.`);
+    if (!ok) return;
+
+    const dateObj = ensureDate(activeDate);
+    const entries = dateObj.entries;
+
+    if (!entries[unit]){
+      alert("Nothing to delete.");
+      return;
+    }
+
+    showSaving();
+
+    // Delete the unit entry
+    delete entries[unit];
+
+    // If date is empty after deletion, remove the date
+    const stillHasAny = Object.keys(entries).some(u => entries[u] && hasAnyField(entries[u]));
+    if (!stillHasAny) delete data[activeDate];
+
+    // If we were viewing this unit, reset form
+    if (activeEditUnit === unit){
+      activeEditUnit = null;
+      clearForm();
+      deleteBtn.disabled = true;
+    }
+
+    persistSoon();
+
+    showSaved();
+    render();
+    renderEntriesList();
+    refreshUnitSelectOptions();
+
+    // Auto-load another remaining entry (nice UX)
+    const remaining = activeDate && data[activeDate] && data[activeDate].entries
+      ? Object.keys(data[activeDate].entries).filter(u => hasAnyField(data[activeDate].entries[u])).sort()
+      : [];
+
+    if (remaining.length){
+      loadEntry(remaining[0]);
+      setEditMode(false);
+    } else {
+      startNewEntry();
+      setEditMode(true);
+    }
+  }
+
+  // Delete button in footer (deletes current selected entry)
+  deleteBtn.addEventListener("click", async () => {
+    if (!activeDate || !activeEditUnit){
+      alert("Please select a saved entry first (click View on the left).");
+      return;
+    }
+    await deleteEntryForUnit(activeEditUnit);
+  });
 
   function showSaving(){
     savePill.textContent = "Saving…";
