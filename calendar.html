@@ -246,9 +246,7 @@
     }catch{}
   }
   function clearDirty(){
-    try{
-      localStorage.setItem(DIRTY_KEY, "0");
-    }catch{}
+    try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{}
   }
   function getLastCloudMs(){
     try{
@@ -279,7 +277,9 @@
 
   // ===== Cloud API =====
   async function apiGetFull(tab, k){
-    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}`;
+    // ✅ IMPORTANT: cache buster so each device always gets fresh data
+    const ts = Date.now();
+    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${ts}`;
     const out = await jsonp(url);
     if (!out || !out.ok) throw new Error(out?.error || "GET failed");
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
@@ -295,7 +295,6 @@
     const res = await fetch(API_URL, { method: "POST", body: form });
     if (!res.ok) throw new Error(`POST failed (${res.status})`);
     const txt = await res.text().catch(()=> "");
-    // Apps Script returns JSON, but we don't strictly require parse
     try{
       const j = JSON.parse(txt || "{}");
       if (j && j.ok === false) throw new Error(j.error || "POST failed");
@@ -315,6 +314,11 @@
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
   }
 
+  function isLocalEmpty(obj){
+    try{ return !obj || (typeof obj === "object" && Object.keys(obj).length === 0); }
+    catch{ return true; }
+  }
+
   // Apply cloud only when safe
   function applyCloudIfNewer(cloudData, cloudMs){
     if (!cloudData || typeof cloudData !== "object") return false;
@@ -324,6 +328,15 @@
 
     // If this device has unsynced edits, never overwrite with cloud.
     if (dirty) return false;
+
+    // ✅ If local is empty, always accept cloud (first sync on a new device)
+    if (isLocalEmpty(data) && cloudMs > 0){
+      data = cloudData;
+      saveLocalNow();
+      setLastCloudMs(cloudMs);
+      render();
+      return true;
+    }
 
     // Only apply if cloud is newer than what we've already applied.
     if (cloudMs > lastCloudMs){
@@ -377,7 +390,7 @@
     try{
       await apiSet(CAL_TAB, CAL_KEY, data);
 
-      // verify by reading back
+      // verify by reading back (also cache-busted)
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
 
@@ -646,8 +659,12 @@
 
   // init
   (async function init(){
+    // make month selection consistent on load
+    setMonth(loadLastMonth());
+
     render();           // show immediately
     await initLoad();   // then sync with cloud safely
+
     setStatus("Ready. Changes sync across devices when you Save.");
 
     // poll every 2 seconds for cross-device updates
