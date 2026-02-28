@@ -6,19 +6,11 @@
   <title>Torre KBR • Guests Information (2026)</title>
   <style>
     :root{
-      --bg:#ffffff;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --shadow:0 10px 28px rgba(17,24,39,.08);
-      --accent:#2563eb;
+      --bg:#ffffff; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --shadow:0 10px 28px rgba(17,24,39,.08); --accent:#2563eb;
 
       --soft:#f9fafb;
-      --danger:#dc2626;
-      --dangerBg:#fee2e2;
-      --dangerBd:#fecaca;
-
+      --danger:#dc2626; --dangerBg:#fee2e2; --dangerBd:#fecaca;
       --okText:#065f46; --okBg:#ecfdf5; --okBd:#a7f3d0;
     }
     *{box-sizing:border-box}
@@ -70,7 +62,6 @@
     .entryList{border:1px solid var(--border);border-radius:14px;background:#fff;overflow:hidden;min-width:0;}
     .entryListHeader{padding:10px 12px;background:var(--soft);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;min-width:0;}
     .entryListHeader strong{font-size:13px;flex:1;min-width:90px;}
-    .entryListHeader .miniBtn{max-width:100%}
     .entryItems{max-height:420px;overflow:auto;-webkit-overflow-scrolling:touch;}
     .entryItem{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);align-items:center;min-width:0;cursor:pointer;}
     .entryItem:last-child{border-bottom:none}
@@ -96,7 +87,6 @@
       .entryItems{max-height:220px}
       .formGrid{grid-template-columns:1fr}
       .formGrid .two{grid-column:1 / -1}
-      .entryListHeader .miniBtn{width:100%}
       .actionsRow .miniBtn{width:100%}
     }
     @media (max-width:640px){ input{min-width:180px} }
@@ -233,10 +223,7 @@
             <button class="btn primary" id="saveBtn" type="button">Save</button>
           </div>
 
-          <div class="small">
-            Rule: One entry per unit per date. Units already used are disabled when adding new.
-          </div>
-
+          <div class="small">Rule: One entry per unit per date. Units already used are disabled when adding new.</div>
           <div class="small" id="syncStatus">Loading from Google Sheets…</div>
         </div>
       </div>
@@ -245,21 +232,9 @@
 </div>
 
 <script>
-  // =========================
-  // FIX #1: utilities shim
-  // =========================
-  window.utilities = window.utilities || {};
-  window.utilities.parseQueryString = window.utilities.parseQueryString || function(qs){
-    const out = {};
-    const s = String(qs || "").replace(/^\?/, "");
-    for (const [k, v] of new URLSearchParams(s)) out[k] = v;
-    return out;
-  };
-
   // ===== Config =====
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-guests-byunit-${YEAR}`;
-
   const LAST_MONTH_KEY = `torre-kbr-guests-last-month-${YEAR}`;
 
   const CLOUD_LAST_KEY = `torre-kbr-guests-cloud-updatedAt-${YEAR}`;
@@ -314,6 +289,8 @@
 
   function setSync(msg){ if (syncStatus) syncStatus.textContent = msg; }
 
+  function canUseNet(){ try{ return navigator.onLine !== false; }catch{ return true; } }
+
   function loadLastMonth(){
     try{
       const raw = localStorage.getItem(LAST_MONTH_KEY);
@@ -330,18 +307,16 @@
     }catch{}
   }
 
-  function isDirty(){
-    try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch{ return false; }
-  }
+  function isDirty(){ try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch{ return false; } }
   function markDirty(){
     try{
       localStorage.setItem(DIRTY_KEY, "1");
       localStorage.setItem(DIRTY_AT_KEY, String(Date.now()));
     }catch{}
   }
-  function clearDirty(){
-    try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{}
-  }
+  function clearDirty(){ try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{} }
+  function getDirtyAt(){ try{ return Number(localStorage.getItem(DIRTY_AT_KEY) || "0") || 0; }catch{ return 0; } }
+
   function getLastCloudMs(){
     try{
       const raw = localStorage.getItem(CLOUD_LAST_KEY);
@@ -353,7 +328,7 @@
     try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{}
   }
 
-  // ===== JSONP (CORS-safe) with cache-busting =====
+  // ===== JSONP GET (CORS-safe) =====
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -366,43 +341,27 @@
       s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
 
       const bust = `__bust=${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      s.src = url
-        + (url.includes("?") ? "&" : "?")
-        + "callback=" + encodeURIComponent(cb)
-        + "&" + bust;
+      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb) + "&" + bust;
 
       document.body.appendChild(s);
     });
   }
 
   async function apiGetFull(tab, k){
-    const ts = Date.now();
-    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${ts}`;
+    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${Date.now()}`;
     const out = await jsonp(url);
     if (!out || !out.ok) throw new Error(out?.error || "GET failed");
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
-  // =========================
-  // FIX #2: Harden POST save
-  // =========================
-  async function apiSet(tab, k, obj){
+  // ===== POST save (fire-and-forget) =====
+  async function apiSetFireAndForget(tab, k, obj){
     const form = new URLSearchParams();
     form.set("key", API_KEY);
     form.set("tab", tab);
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
-
-    try{
-      const res = await fetch(API_URL, { method: "POST", body: form });
-      if (!res.ok) throw new Error(`POST failed (${res.status})`);
-      const j = await res.json().catch(()=> ({}));
-      if (j && j.ok === false) throw new Error(j.error || "POST failed");
-      return j.updatedAt || null;
-    }catch(err){
-      await fetch(API_URL, { method: "POST", body: form, mode: "no-cors" });
-      return null;
-    }
+    await fetch(API_URL, { method:"POST", body: form, mode:"no-cors", keepalive:true }).catch(()=>{});
   }
 
   function loadLocal(){
@@ -462,51 +421,73 @@
       }
 
       const changed = applyCloudIfNewer(cloudData, cloudMs);
-      setSync(changed ? "Loaded from Google Sheets (sync across devices)." : "Ready.");
+      setSync(changed ? "Loaded ✓ (synced)" : "Ready ✓ (sync enabled)");
     }catch(e){
       console.warn("Cloud load failed; using local.", e);
-      setSync("Offline: using local cache. (Cloud load failed)");
+      setSync("Using local cache (cloud not reachable).");
     }
   }
 
+  // Persist (do not clear dirty here)
+  let __persistTimer = null;
+  function persistSoon(){
+    clearTimeout(__persistTimer);
+    __persistTimer = setTimeout(() => { persist().catch(()=>{}); }, 250);
+  }
+  async function persist(){
+    setSync("Saving… (syncing)");
+    await apiSetFireAndForget(TAB_NAME, CLOUD_KEY, data);
+  }
+
+  async function flushIfDirty(){
+    try{
+      if (!isDirty()) return;
+      if (!canUseNet()) return;
+      await persist();
+    }catch{}
+  }
+
+  // Poll (also confirms dirty has landed)
   async function pollCloud(){
-    if (isDirty()) return;
-    if (modalOverlay && modalOverlay.style.display === "flex") return;
+    if (!canUseNet()) return;
 
     try{
       const cloud = await apiGetFull(TAB_NAME, CLOUD_KEY);
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+
+      if (isDirty()){
+        const dirtyAt = getDirtyAt();
+        if (cloudMs && dirtyAt && cloudMs >= (dirtyAt - 2000)){
+          clearDirty();
+          setLastCloudMs(cloudMs);
+          setSync("Saved ✓ (synced)");
+        } else {
+          setSync("Saving… (syncing)");
+        }
+        return;
+      }
+
       const changed = applyCloudIfNewer(cloudData, cloudMs);
-      if (changed) setSync("Synced from Google Sheets.");
+      if (changed) setSync("Updated ✓ (synced)");
     }catch{}
   }
 
-  let __persistTimer = null;
-  function persistSoon(){
-    clearTimeout(__persistTimer);
-    __persistTimer = setTimeout(() => { persist().catch(()=>{}); }, 450);
-  }
+  // Auto retry saves while DIRTY
+  setInterval(() => {
+    if (!canUseNet()) return;
+    if (!isDirty()) return;
+    if (modalOverlay && modalOverlay.style.display === "flex") return;
+    persist().catch(()=>{});
+  }, 2500);
 
-  async function persist(){
-    try{
-      setSync("Saving to Google Sheets…");
-      const updatedAt = await apiSet(TAB_NAME, CLOUD_KEY, data);
+  // Flush on exit/background
+  window.addEventListener("pagehide", flushIfDirty);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushIfDirty();
+  });
 
-      clearDirty();
-      if (updatedAt){
-        const ms = Date.parse(updatedAt);
-        if (ms) setLastCloudMs(ms);
-        setSync("Saved to Google Sheets (syncs across devices).");
-      }else{
-        setSync("Saved. Verifying cloud sync…");
-      }
-    }catch(e){
-      console.warn("Cloud save failed; kept locally.", e);
-      setSync("Saved locally only (cloud sync failed).");
-      markDirty();
-    }
-  }
+  // ===== Your existing Guests app logic below (mostly unchanged) =====
 
   MONTHS.forEach((m, idx) => {
     const opt = document.createElement("option");
@@ -999,7 +980,7 @@
         markDirty();
         persistSoon();
         render();
-        alert("Imported successfully! (It will sync to Google Sheets)");
+        alert("Imported successfully! (Syncing to Google Sheets)");
       }catch{
         alert("Could not import: invalid JSON.");
       }
@@ -1020,12 +1001,22 @@
   // ===== Init =====
   (async function init(){
     setMonth(loadLastMonth());
-
     setEditMode(false);
-    await initLoad();
-    setSync("Ready. Auto-saves sync across devices (Google Sheets).");
 
-    setInterval(pollCloud, 3000);
+    await initLoad();
+    setSync("Ready ✓ (sync enabled)");
+
+    // Poll faster when visible
+    setInterval(() => {
+      if (document.visibilityState === "visible") pollCloud();
+    }, 1500);
+
+    // Poll slower when hidden
+    setInterval(() => {
+      if (document.visibilityState !== "visible") pollCloud();
+    }, 6000);
+
+    pollCloud();
   })();
 </script>
 </body>
