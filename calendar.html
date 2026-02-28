@@ -275,14 +275,13 @@
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
 
-    // Important: do NOT set headers -> browser will send application/x-www-form-urlencoded automatically.
-    // This avoids CORS preflight that breaks Apps Script.
+    // Important: do NOT set headers -> avoids CORS preflight
     await fetch(API_URL, {
       method: "POST",
       body: form
     });
 
-    // We verify with JSONP GET (CORS-safe)
+    // verify with JSONP GET
     return true;
   }
 
@@ -322,7 +321,7 @@
         render();
         setStatus("Loaded from Google Sheets (sync across devices).");
       } else {
-        // local is newer OR cloud empty -> keep local, and try to push it
+        // local is newer OR cloud empty -> keep local, and push on next save
         render();
 
         if (Object.keys(data || {}).length === 0 && !cloudData){
@@ -354,7 +353,7 @@
       // send POST form (no preflight)
       await apiSet(CAL_TAB, CAL_KEY, data);
 
-      // verify by reading back
+      // verify by reading back (JSONP)
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
 
@@ -469,6 +468,23 @@
   let activeDate = null;
   let workingMap = null;
 
+  // ✅ NEW: commit modal changes immediately + auto-save (prevents snap-back to Available)
+  function commitAndAutoSave(){
+    if (!activeDate || !workingMap) return;
+
+    // Commit modal edits into main data
+    data[activeDate] = { ...workingMap };
+
+    // Save locally immediately (prevents “snap back” even if rerender happens)
+    saveLocal();
+
+    // Push to cloud in background
+    persistSoon();
+
+    // Update calendar tiles behind modal
+    render();
+  }
+
   function openModal(dateStr){
     // remember month
     saveLastMonth(currentMonth);
@@ -500,6 +516,7 @@
       select.addEventListener("change", () => {
         workingMap[unit] = select.value;
         applySelectStyle(select);
+        commitAndAutoSave(); // ✅ autosave on any change
       });
 
       card.appendChild(name);
@@ -539,21 +556,19 @@
     if (!workingMap) return;
     for (const u of UNITS) workingMap[u] = "available";
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="available"; applySelectStyle(s); });
+    commitAndAutoSave(); // ✅ autosave for set-all
   });
 
   setAllBookedBtn.addEventListener("click", () => {
     if (!workingMap) return;
     for (const u of UNITS) workingMap[u] = "booked";
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="booked"; applySelectStyle(s); });
+    commitAndAutoSave(); // ✅ autosave for set-all
   });
 
+  // Save button now just ensures commit + closes (autosave already happened)
   saveBtn.addEventListener("click", () => {
-    if (!activeDate || !workingMap) return;
-    data[activeDate] = { ...workingMap };
-
-    // local + cloud
-    persistSoon();
-    render();
+    commitAndAutoSave();
     closeModal();
   });
 
@@ -605,7 +620,7 @@
   (async function init(){
     render();           // show last month immediately
     await initLoad();   // then sync with cloud safely
-    setStatus("Ready. Changes will sync across devices when you Save.");
+    setStatus("Ready. Changes will sync across devices when you edit (auto-save).");
   })();
 </script>
 </body>
