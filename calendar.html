@@ -150,6 +150,9 @@
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
 
+  // ✅ New: remember last opened month
+  const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
+
   // ====== Remote storage (Google Sheets via Apps Script JSONP) ======
   const API_URL = "https://script.google.com/macros/s/AKfycbxhgciD9s7x4pPtyGffjzPhLED_DQ0eONXj_iVsKoQu-meszK9O6JRNyQT0YKvBqxg1xQ/exec";
   const API_KEY = "kbr_super_secret_2026";
@@ -208,6 +211,32 @@
 
   function setStatus(msg){
     if (saveStatus) saveStatus.textContent = msg;
+  }
+
+  // ✅ New helpers: persist month selection
+  function loadLastMonth(){
+    try{
+      const raw = localStorage.getItem(LAST_MONTH_KEY);
+      const n = raw == null ? 0 : Number(raw);
+      if (Number.isFinite(n) && n >= 0 && n <= 11) return n;
+      return 0;
+    }catch{
+      return 0;
+    }
+  }
+  function saveLastMonth(m){
+    try{
+      const n = Number(m);
+      if (Number.isFinite(n) && n >= 0 && n <= 11){
+        localStorage.setItem(LAST_MONTH_KEY, String(n));
+      }
+    }catch{}
+  }
+  function setMonth(m){
+    currentMonth = Math.max(0, Math.min(11, Number(m) || 0));
+    monthSelect.value = String(currentMonth);
+    saveLastMonth(currentMonth);
+    render();
   }
 
   // ===== JSONP Helper =====
@@ -301,30 +330,24 @@
     monthSelect.appendChild(opt);
   });
 
-  let currentMonth = 0;
+  // ✅ New: start on last opened month (defaults to 0 = Jan)
+  let currentMonth = loadLastMonth();
   monthSelect.value = String(currentMonth);
 
   monthSelect.addEventListener("change", () => {
-    currentMonth = Number(monthSelect.value);
-    render();
+    setMonth(Number(monthSelect.value));
   });
 
   prevBtn.addEventListener("click", () => {
-    currentMonth = Math.max(0, currentMonth - 1);
-    monthSelect.value = String(currentMonth);
-    render();
+    setMonth(currentMonth - 1);
   });
 
   nextBtn.addEventListener("click", () => {
-    currentMonth = Math.min(11, currentMonth + 1);
-    monthSelect.value = String(currentMonth);
-    render();
+    setMonth(currentMonth + 1);
   });
 
   todayBtn.addEventListener("click", () => {
-    currentMonth = 0;
-    monthSelect.value = "0";
-    render();
+    setMonth(0);
   });
 
   // ===== Calendar render =====
@@ -400,6 +423,9 @@
   let workingMap = null;
 
   function openModal(dateStr){
+    // ✅ New: remember the month you were on when you opened a date
+    saveLastMonth(currentMonth);
+
     activeDate = dateStr;
     workingMap = getDateMap(dateStr);
 
@@ -527,6 +553,8 @@
 
   // init
   (async function init(){
+    // render starts on last used month immediately (already set above)
+    render();
     await initLoad();
     setStatus("Ready. Changes will sync across devices when you Save.");
   })();
