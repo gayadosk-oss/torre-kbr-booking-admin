@@ -149,10 +149,17 @@
   // ====== Config ======
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
-  const LOCAL_UPDATED_KEY = `torre-kbr-units-updatedAt-${YEAR}`;
 
-  // ✅ Remember last month you were editing (device-local)
+  // ✅ Month memory (device-local)
   const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
+
+  // ✅ Cross-device sync keys
+  // last cloud timestamp we have applied (authoritative)
+  const CLOUD_LAST_KEY = `torre-kbr-cloud-updatedAt-${YEAR}`;
+  // local has unsynced changes
+  const DIRTY_KEY = `torre-kbr-dirty-${YEAR}`;
+  // when local became dirty (device time, used only for safety)
+  const DIRTY_AT_KEY = `torre-kbr-dirtyAt-${YEAR}`;
 
   // ====== Remote storage (Google Sheets via Apps Script) ======
   const API_URL = "https://script.google.com/macros/s/AKfycbxhgciD9s7x4pPtyGffjzPhLED_DQ0eONXj_iVsKoQu-meszK9O6JRNyQT0YKvBqxg1xQ/exec";
@@ -231,16 +238,30 @@
     }catch{}
   }
 
-  // ===== Local updatedAt =====
-  function getLocalUpdatedAt(){
+  // ===== Dirty / Cloud markers =====
+  function isDirty(){
+    try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch{ return false; }
+  }
+  function markDirty(){
     try{
-      const raw = localStorage.getItem(LOCAL_UPDATED_KEY);
+      localStorage.setItem(DIRTY_KEY, "1");
+      localStorage.setItem(DIRTY_AT_KEY, String(Date.now()));
+    }catch{}
+  }
+  function clearDirty(){
+    try{
+      localStorage.setItem(DIRTY_KEY, "0");
+    }catch{}
+  }
+  function getLastCloudMs(){
+    try{
+      const raw = localStorage.getItem(CLOUD_LAST_KEY);
       const n = raw == null ? 0 : Number(raw);
       return Number.isFinite(n) ? n : 0;
     }catch{ return 0; }
   }
-  function setLocalUpdatedAt(ms){
-    try{ localStorage.setItem(LOCAL_UPDATED_KEY, String(Number(ms) || Date.now())); }catch{}
+  function setLastCloudMs(ms){
+    try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{}
   }
 
   // ===== JSONP Helper (CORS-safe GET) =====
@@ -274,7 +295,6 @@
     form.set("tab", tab);
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
-
     await fetch(API_URL, { method: "POST", body: form });
     return true;
   }
@@ -287,47 +307,60 @@
       return {};
     }
   }
-
-  // ✅ Single source of truth for saving local
   function saveLocalNow(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
-    setLocalUpdatedAt(Date.now());
+  }
+
+  // ✅ Apply cloud only when safe (stops overwriting and enables cross-device sync)
+  function applyCloudIfNewer(cloudData, cloudMs){
+    if (!cloudData || typeof cloudData !== "object") return false;
+
+    const lastCloudMs = getLastCloudMs();
+    const dirty = isDirty();
+
+    // If this device has unsynced edits, never overwrite with cloud.
+    if (dirty) return false;
+
+    // Only apply if cloud is newer than what we've already applied.
+    if (cloudMs > lastCloudMs){
+      data = cloudData;
+      saveLocalNow();
+      setLastCloudMs(cloudMs);
+      render();
+      return true;
+    }
+
+    return false;
   }
 
   async function initLoad(){
-    // 1) local first (instant)
+    // 1) local first
     data = loadLocal();
     render();
 
-    // 2) then cloud — but never overwrite newer local (prevents auto-revert)
+    // 2) then cloud
     try{
       setStatus("Loading from Google Sheets…");
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
 
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
-      const localMs = getLocalUpdatedAt();
 
-      if (cloudData && cloudMs >= localMs){
-        data = cloudData;
-        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
-        if (cloudMs) setLocalUpdatedAt(cloudMs);
-        render();
-        setStatus("Loaded from Google Sheets (sync across devices).");
-      } else {
-        if (Object.keys(data || {}).length === 0 && !cloudData){
-          setStatus("No cloud data yet. Your next Save will create it in Google Sheets.");
-        } else {
-          setStatus("Using local (newer). Will sync to Google Sheets in the background.");
-        }
+      if (!cloudData){
+        setStatus("No cloud data yet. Your next Save will create it in Google Sheets.");
+        return;
       }
+
+      const changed = applyCloudIfNewer(cloudData, cloudMs);
+      setStatus(changed ? "Loaded from Google Sheets (sync across devices)." : "Ready.");
+
     }catch(e){
       console.warn("Cloud load failed; using local.", e);
       setStatus("Offline: using local cache. (Cloud load failed)");
     }
   }
 
-  // Debounced background sync
+  // Debounced background save
   let __saveTimer = null;
   function persistSoon(){
     clearTimeout(__saveTimer);
@@ -337,31 +370,39 @@
   async function persist(){
     setStatus("Saving…");
 
-    // local already saved before calling this (on Save click),
-    // but keep it safe:
-    saveLocalNow();
-    const localMsAtSave = getLocalUpdatedAt();
-
+    // local is already saved before calling persist()
     try{
       await apiSet(CAL_TAB, CAL_KEY, data);
 
-      // Verify by reading back — BUT do not overwrite newer local if cloud lags
+      // verify by reading back (JSONP)
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
-      const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
 
-      // Only accept cloud if it’s at least as new as our local save timestamp
-      if (cloudData && cloudMs >= localMsAtSave){
-        data = cloudData;
-        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
-        setLocalUpdatedAt(cloudMs || Date.now());
-        render();
-      }
+      // IMPORTANT: when our save succeeds, mark clean and set lastCloudMs
+      clearDirty();
+      if (cloudMs) setLastCloudMs(cloudMs);
 
       setStatus("Saved to Google Sheets (syncs across devices).");
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
       setStatus("Saved locally only (cloud sync failed).");
+      // keep DIRTY so it won't be overwritten
+      markDirty();
+    }
+  }
+
+  // ✅ Auto-poll cloud for cross-device sync (only when not editing and not dirty)
+  async function pollCloud(){
+    if (isDirty()) return;
+    if (modalOverlay && modalOverlay.style.display === "flex") return;
+
+    try{
+      const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
+      const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
+      const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+      applyCloudIfNewer(cloudData, cloudMs);
+    }catch{
+      // ignore
     }
   }
 
@@ -537,22 +578,23 @@
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="booked"; applySelectStyle(s); });
   });
 
-  // ✅ FIX: Save locally immediately (prevents losing changes on refresh / delayed cloud)
+  // ✅ Save: local immediately + mark dirty + background cloud sync
   saveBtn.addEventListener("click", () => {
     if (!activeDate || !workingMap) return;
 
     data[activeDate] = { ...workingMap };
 
-    // 1) local immediately (so it can’t “revert”)
+    // local first
     saveLocalNow();
 
-    // 2) update UI immediately
-    render();
+    // mark dirty so cloud polling won't overwrite
+    markDirty();
 
-    // 3) close modal
+    // UI now
+    render();
     closeModal();
 
-    // 4) background cloud sync
+    // background cloud sync
     persistSoon();
   });
 
@@ -585,13 +627,9 @@
           return;
         }
         data = parsed.data;
-
-        // local immediately
         saveLocalNow();
-
-        // background sync
+        markDirty();
         persistSoon();
-
         render();
         alert("Imported successfully!");
       }catch{
@@ -608,8 +646,11 @@
   // init
   (async function init(){
     render();           // show last month immediately
-    await initLoad();   // then sync with cloud safely (won't overwrite newer local)
+    await initLoad();   // then sync with cloud safely
     setStatus("Ready. Changes will sync across devices when you Save.");
+
+    // start polling every 6 seconds for cross-device updates
+    setInterval(pollCloud, 6000);
   })();
 </script>
 </body>
