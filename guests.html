@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Torre KBR • Guests Information (2026)</title>
   <style>
-    /* (YOUR CSS IS UNCHANGED — kept exactly as you sent) */
     :root{
       --bg:#ffffff;
       --card:#ffffff;
@@ -246,6 +245,17 @@
 </div>
 
 <script>
+  // =========================
+  // FIX #1: utilities shim
+  // =========================
+  window.utilities = window.utilities || {};
+  window.utilities.parseQueryString = window.utilities.parseQueryString || function(qs){
+    const out = {};
+    const s = String(qs || "").replace(/^\?/, "");
+    for (const [k, v] of new URLSearchParams(s)) out[k] = v;
+    return out;
+  };
+
   // ===== Config =====
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-guests-byunit-${YEAR}`;
@@ -343,7 +353,7 @@
     try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{}
   }
 
-  // ===== JSONP (CORS-safe) with cache-busting (IMPORTANT for Safari/iOS) =====
+  // ===== JSONP (CORS-safe) with cache-busting =====
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -373,19 +383,26 @@
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
-  // POST save (no CORS preflight) — returns updatedAt from server response
+  // =========================
+  // FIX #2: Harden POST save
+  // =========================
   async function apiSet(tab, k, obj){
     const form = new URLSearchParams();
     form.set("key", API_KEY);
     form.set("tab", tab);
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
-    const res = await fetch(API_URL, { method: "POST", body: form });
-    if (!res.ok) throw new Error(`POST failed (${res.status})`);
 
-    const j = await res.json().catch(()=> ({}));
-    if (j && j.ok === false) throw new Error(j.error || "POST failed");
-    return j.updatedAt || null;
+    try{
+      const res = await fetch(API_URL, { method: "POST", body: form });
+      if (!res.ok) throw new Error(`POST failed (${res.status})`);
+      const j = await res.json().catch(()=> ({}));
+      if (j && j.ok === false) throw new Error(j.error || "POST failed");
+      return j.updatedAt || null;
+    }catch(err){
+      await fetch(API_URL, { method: "POST", body: form, mode: "no-cors" });
+      return null;
+    }
   }
 
   function loadLocal(){
@@ -411,7 +428,6 @@
 
     const lastCloudMs = getLastCloudMs();
 
-    // first sync for new device
     if (isLocalEmpty(data) && cloudMs > 0){
       data = cloudData;
       saveLocalNow();
@@ -461,7 +477,8 @@
       const cloud = await apiGetFull(TAB_NAME, CLOUD_KEY);
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
-      applyCloudIfNewer(cloudData, cloudMs);
+      const changed = applyCloudIfNewer(cloudData, cloudMs);
+      if (changed) setSync("Synced from Google Sheets.");
     }catch{}
   }
 
@@ -480,9 +497,10 @@
       if (updatedAt){
         const ms = Date.parse(updatedAt);
         if (ms) setLastCloudMs(ms);
+        setSync("Saved to Google Sheets (syncs across devices).");
+      }else{
+        setSync("Saved. Verifying cloud sync…");
       }
-
-      setSync("Saved to Google Sheets (syncs across devices).");
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
       setSync("Saved locally only (cloud sync failed).");
@@ -1007,7 +1025,6 @@
     await initLoad();
     setSync("Ready. Auto-saves sync across devices (Google Sheets).");
 
-    // Poll every 3 seconds (less load, still near-real-time)
     setInterval(pollCloud, 3000);
   })();
 </script>
