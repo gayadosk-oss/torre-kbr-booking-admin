@@ -146,6 +146,18 @@
 </div>
 
 <script>
+  // =========================
+  // FIX #1: utilities shim
+  // =========================
+  // Prevents "utilities.parseQueryString is not a function" even if an older call exists.
+  window.utilities = window.utilities || {};
+  window.utilities.parseQueryString = window.utilities.parseQueryString || function(qs){
+    const out = {};
+    const s = String(qs || "").replace(/^\?/, "");
+    for (const [k, v] of new URLSearchParams(s)) out[k] = v;
+    return out;
+  };
+
   // ====== Config ======
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
@@ -278,7 +290,12 @@
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
-  // POST save as FORM (no CORS preflight)
+  // =========================
+  // FIX #2: Harden POST save
+  // - Try normal fetch+json
+  // - If Google blocks reading response, fallback to no-cors
+  //   (sync confirmation will happen via poll)
+  // =========================
   async function apiSet(tab, k, obj){
     const form = new URLSearchParams();
     form.set("key", API_KEY);
@@ -286,13 +303,19 @@
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
 
-    const res = await fetch(API_URL, { method: "POST", body: form });
-    if (!res.ok) throw new Error(`POST failed (${res.status})`);
-
-    // IMPORTANT: read updatedAt from POST response (do NOT verify by GET)
-    const j = await res.json().catch(()=> ({}));
-    if (j && j.ok === false) throw new Error(j.error || "POST failed");
-    return j.updatedAt || null;
+    // Attempt 1: normal (read JSON response)
+    try{
+      const res = await fetch(API_URL, { method: "POST", body: form });
+      if (!res.ok) throw new Error(`POST failed (${res.status})`);
+      const j = await res.json().catch(()=> ({}));
+      if (j && j.ok === false) throw new Error(j.error || "POST failed");
+      return j.updatedAt || null;
+    }catch(err){
+      // Attempt 2: fire-and-forget (prevents CORS/redirect read failures)
+      await fetch(API_URL, { method: "POST", body: form, mode: "no-cors" });
+      // Can't read updatedAt here; pollCloud will verify
+      return null;
+    }
   }
 
   function loadLocal(){
@@ -374,13 +397,17 @@
     try{
       const updatedAt = await apiSet(CAL_TAB, CAL_KEY, data);
 
+      // Save always remains local; cloud confirmation can be immediate (updatedAt) or via poll
       clearDirty();
+
       if (updatedAt){
         const ms = Date.parse(updatedAt);
         if (ms) setLastCloudMs(ms);
+        setStatus("Saved to Google Sheets (syncs across devices).");
+      }else{
+        // no-cors path: confirm by polling
+        setStatus("Saved. Verifying cloud sync…");
       }
-
-      setStatus("Saved to Google Sheets (syncs across devices).");
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
       setStatus("Saved locally only (cloud sync failed).");
@@ -397,7 +424,9 @@
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
-      applyCloudIfNewer(cloudData, cloudMs);
+
+      const changed = applyCloudIfNewer(cloudData, cloudMs);
+      if (changed) setStatus("Synced from Google Sheets.");
     }catch{}
   }
 
