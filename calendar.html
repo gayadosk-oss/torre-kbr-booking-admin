@@ -150,15 +150,12 @@
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
 
-  // ✅ Month memory (device-local)
+  // Month memory (device-local)
   const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
 
-  // ✅ Cross-device sync keys
-  // last cloud timestamp we have applied (authoritative)
+  // Cross-device sync markers
   const CLOUD_LAST_KEY = `torre-kbr-cloud-updatedAt-${YEAR}`;
-  // local has unsynced changes
   const DIRTY_KEY = `torre-kbr-dirty-${YEAR}`;
-  // when local became dirty (device time, used only for safety)
   const DIRTY_AT_KEY = `torre-kbr-dirtyAt-${YEAR}`;
 
   // ====== Remote storage (Google Sheets via Apps Script) ======
@@ -288,14 +285,21 @@
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
-  // ✅ POST save as FORM (no CORS preflight)
+  // POST save as FORM (no CORS preflight)
   async function apiSet(tab, k, obj){
     const form = new URLSearchParams();
     form.set("key", API_KEY);
     form.set("tab", tab);
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
-    await fetch(API_URL, { method: "POST", body: form });
+    const res = await fetch(API_URL, { method: "POST", body: form });
+    if (!res.ok) throw new Error(`POST failed (${res.status})`);
+    const txt = await res.text().catch(()=> "");
+    // Apps Script returns JSON, but we don't strictly require parse
+    try{
+      const j = JSON.parse(txt || "{}");
+      if (j && j.ok === false) throw new Error(j.error || "POST failed");
+    }catch{}
     return true;
   }
 
@@ -311,7 +315,7 @@
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
   }
 
-  // ✅ Apply cloud only when safe (stops overwriting and enables cross-device sync)
+  // Apply cloud only when safe
   function applyCloudIfNewer(cloudData, cloudMs){
     if (!cloudData || typeof cloudData !== "object") return false;
 
@@ -370,15 +374,13 @@
   async function persist(){
     setStatus("Saving…");
 
-    // local is already saved before calling persist()
     try{
       await apiSet(CAL_TAB, CAL_KEY, data);
 
-      // verify by reading back (JSONP)
+      // verify by reading back
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
 
-      // IMPORTANT: when our save succeeds, mark clean and set lastCloudMs
       clearDirty();
       if (cloudMs) setLastCloudMs(cloudMs);
 
@@ -386,12 +388,11 @@
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
       setStatus("Saved locally only (cloud sync failed).");
-      // keep DIRTY so it won't be overwritten
       markDirty();
     }
   }
 
-  // ✅ Auto-poll cloud for cross-device sync (only when not editing and not dirty)
+  // Auto-poll cloud (only when not editing and not dirty)
   async function pollCloud(){
     if (isDirty()) return;
     if (modalOverlay && modalOverlay.style.display === "flex") return;
@@ -578,7 +579,7 @@
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="booked"; applySelectStyle(s); });
   });
 
-  // ✅ Save: local immediately + mark dirty + background cloud sync
+  // Save: local immediately + mark dirty + background cloud sync
   saveBtn.addEventListener("click", () => {
     if (!activeDate || !workingMap) return;
 
@@ -645,11 +646,11 @@
 
   // init
   (async function init(){
-    render();           // show last month immediately
+    render();           // show immediately
     await initLoad();   // then sync with cloud safely
-    setStatus("Ready. Changes will sync across devices when you Save.");
+    setStatus("Ready. Changes sync across devices when you Save.");
 
-    // start polling every 2 seconds for cross-device updates
+    // poll every 2 seconds for cross-device updates
     setInterval(pollCloud, 2000);
   })();
 </script>
