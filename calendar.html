@@ -149,8 +149,6 @@
   // ====== Config ======
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
-
-  // Month memory (device-local)
   const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
 
   // Cross-device sync markers
@@ -211,12 +209,9 @@
 
   const exportBtn = document.getElementById("exportBtn");
   const importBtn = document.getElementById("importBtn");
-
   const saveStatus = document.getElementById("saveStatus");
 
-  function setStatus(msg){
-    if (saveStatus) saveStatus.textContent = msg;
-  }
+  function setStatus(msg){ if (saveStatus) saveStatus.textContent = msg; }
 
   // ===== Month memory =====
   function loadLastMonth(){
@@ -229,25 +224,19 @@
   function saveLastMonth(m){
     try{
       const n = Number(m);
-      if (Number.isFinite(n) && n >= 0 && n <= 11){
-        localStorage.setItem(LAST_MONTH_KEY, String(n));
-      }
+      if (Number.isFinite(n) && n >= 0 && n <= 11) localStorage.setItem(LAST_MONTH_KEY, String(n));
     }catch{}
   }
 
   // ===== Dirty / Cloud markers =====
-  function isDirty(){
-    try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch{ return false; }
-  }
+  function isDirty(){ try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch{ return false; } }
   function markDirty(){
     try{
       localStorage.setItem(DIRTY_KEY, "1");
       localStorage.setItem(DIRTY_AT_KEY, String(Date.now()));
     }catch{}
   }
-  function clearDirty(){
-    try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{}
-  }
+  function clearDirty(){ try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{} }
   function getLastCloudMs(){
     try{
       const raw = localStorage.getItem(CLOUD_LAST_KEY);
@@ -255,9 +244,7 @@
       return Number.isFinite(n) ? n : 0;
     }catch{ return 0; }
   }
-  function setLastCloudMs(ms){
-    try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{}
-  }
+  function setLastCloudMs(ms){ try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{} }
 
   // ===== JSONP Helper (CORS-safe GET) =====
   function jsonp(url){
@@ -270,15 +257,21 @@
       };
       window[cb] = (res) => { cleanup(); resolve(res); };
       s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
-      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb);
+
+      // EXTRA cache buster for Safari
+      const bust = `__bust=${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      s.src = url
+        + (url.includes("?") ? "&" : "?")
+        + "callback=" + encodeURIComponent(cb)
+        + "&" + bust;
+
       document.body.appendChild(s);
     });
   }
 
   // ===== Cloud API =====
   async function apiGetFull(tab, k){
-    // ✅ IMPORTANT: cache buster so each device always gets fresh data
-    const ts = Date.now();
+    const ts = Date.now(); // cache buster
     const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${ts}`;
     const out = await jsonp(url);
     if (!out || !out.ok) throw new Error(out?.error || "GET failed");
@@ -292,14 +285,14 @@
     form.set("tab", tab);
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
+
     const res = await fetch(API_URL, { method: "POST", body: form });
     if (!res.ok) throw new Error(`POST failed (${res.status})`);
-    const txt = await res.text().catch(()=> "");
-    try{
-      const j = JSON.parse(txt || "{}");
-      if (j && j.ok === false) throw new Error(j.error || "POST failed");
-    }catch{}
-    return true;
+
+    // IMPORTANT: read updatedAt from POST response (do NOT verify by GET)
+    const j = await res.json().catch(()=> ({}));
+    if (j && j.ok === false) throw new Error(j.error || "POST failed");
+    return j.updatedAt || null;
   }
 
   function loadLocal(){
@@ -310,10 +303,7 @@
       return {};
     }
   }
-  function saveLocalNow(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
-  }
-
+  function saveLocalNow(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{} }
   function isLocalEmpty(obj){
     try{ return !obj || (typeof obj === "object" && Object.keys(obj).length === 0); }
     catch{ return true; }
@@ -322,14 +312,11 @@
   // Apply cloud only when safe
   function applyCloudIfNewer(cloudData, cloudMs){
     if (!cloudData || typeof cloudData !== "object") return false;
+    if (isDirty()) return false;
 
     const lastCloudMs = getLastCloudMs();
-    const dirty = isDirty();
 
-    // If this device has unsynced edits, never overwrite with cloud.
-    if (dirty) return false;
-
-    // ✅ If local is empty, always accept cloud (first sync on a new device)
+    // NEW DEVICE FIRST SYNC: if local empty, always accept cloud
     if (isLocalEmpty(data) && cloudMs > 0){
       data = cloudData;
       saveLocalNow();
@@ -338,7 +325,6 @@
       return true;
     }
 
-    // Only apply if cloud is newer than what we've already applied.
     if (cloudMs > lastCloudMs){
       data = cloudData;
       saveLocalNow();
@@ -351,11 +337,11 @@
   }
 
   async function initLoad(){
-    // 1) local first
+    // local first
     data = loadLocal();
     render();
 
-    // 2) then cloud
+    // then cloud
     try{
       setStatus("Loading from Google Sheets…");
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
@@ -370,7 +356,6 @@
 
       const changed = applyCloudIfNewer(cloudData, cloudMs);
       setStatus(changed ? "Loaded from Google Sheets (sync across devices)." : "Ready.");
-
     }catch(e){
       console.warn("Cloud load failed; using local.", e);
       setStatus("Offline: using local cache. (Cloud load failed)");
@@ -381,21 +366,19 @@
   let __saveTimer = null;
   function persistSoon(){
     clearTimeout(__saveTimer);
-    __saveTimer = setTimeout(() => { persist().catch(()=>{}); }, 700);
+    __saveTimer = setTimeout(() => { persist().catch(()=>{}); }, 450);
   }
 
   async function persist(){
     setStatus("Saving…");
-
     try{
-      await apiSet(CAL_TAB, CAL_KEY, data);
-
-      // verify by reading back (also cache-busted)
-      const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
-      const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+      const updatedAt = await apiSet(CAL_TAB, CAL_KEY, data);
 
       clearDirty();
-      if (cloudMs) setLastCloudMs(cloudMs);
+      if (updatedAt){
+        const ms = Date.parse(updatedAt);
+        if (ms) setLastCloudMs(ms);
+      }
 
       setStatus("Saved to Google Sheets (syncs across devices).");
     }catch(e){
@@ -415,9 +398,7 @@
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
       applyCloudIfNewer(cloudData, cloudMs);
-    }catch{
-      // ignore
-    }
+    }catch{}
   }
 
   // ===== Month selector =====
@@ -452,7 +433,6 @@
 
     monthTitle.textContent = `${MONTHS[currentMonth]} ${YEAR}`;
     monthMeta.textContent = `Click any date to edit unit availability`;
-
     daysGrid.innerHTML = "";
 
     for (let i = 0; i < firstDow; i++) {
@@ -485,7 +465,6 @@
           <span class="pill av">${counts.available} Available</span>
         </div>
       `;
-
       daysGrid.appendChild(el);
     }
   }
@@ -572,10 +551,7 @@
 
   closeModalBtn.addEventListener("click", closeModal);
   cancelBtn.addEventListener("click", closeModal);
-  modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) closeModal();
-  });
-
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
   });
@@ -597,18 +573,12 @@
     if (!activeDate || !workingMap) return;
 
     data[activeDate] = { ...workingMap };
-
-    // local first
     saveLocalNow();
-
-    // mark dirty so cloud polling won't overwrite
     markDirty();
 
-    // UI now
     render();
     closeModal();
 
-    // background cloud sync
     persistSoon();
   });
 
@@ -657,18 +627,14 @@
     return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   }
 
-  // init
   (async function init(){
-    // make month selection consistent on load
     setMonth(loadLastMonth());
-
-    render();           // show immediately
-    await initLoad();   // then sync with cloud safely
-
+    render();
+    await initLoad();
     setStatus("Ready. Changes sync across devices when you Save.");
 
-    // poll every 2 seconds for cross-device updates
-    setInterval(pollCloud, 2000);
+    // Poll every 3 seconds (less load, still near-real-time)
+    setInterval(pollCloud, 3000);
   })();
 </script>
 </body>
