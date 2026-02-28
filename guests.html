@@ -343,6 +343,7 @@
     try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{}
   }
 
+  // ===== JSONP (CORS-safe) with cache-busting (IMPORTANT for Safari/iOS) =====
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -353,13 +354,18 @@
       };
       window[cb] = (res) => { cleanup(); resolve(res); };
       s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
-      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb);
+
+      const bust = `__bust=${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      s.src = url
+        + (url.includes("?") ? "&" : "?")
+        + "callback=" + encodeURIComponent(cb)
+        + "&" + bust;
+
       document.body.appendChild(s);
     });
   }
 
   async function apiGetFull(tab, k){
-    // ✅ IMPORTANT: cache buster so each device always gets fresh data
     const ts = Date.now();
     const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${ts}`;
     const out = await jsonp(url);
@@ -367,6 +373,7 @@
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
+  // POST save (no CORS preflight) — returns updatedAt from server response
   async function apiSet(tab, k, obj){
     const form = new URLSearchParams();
     form.set("key", API_KEY);
@@ -375,12 +382,10 @@
     form.set("data", JSON.stringify(obj ?? {}));
     const res = await fetch(API_URL, { method: "POST", body: form });
     if (!res.ok) throw new Error(`POST failed (${res.status})`);
-    const txt = await res.text().catch(()=> "");
-    try{
-      const j = JSON.parse(txt || "{}");
-      if (j && j.ok === false) throw new Error(j.error || "POST failed");
-    }catch{}
-    return true;
+
+    const j = await res.json().catch(()=> ({}));
+    if (j && j.ok === false) throw new Error(j.error || "POST failed");
+    return j.updatedAt || null;
   }
 
   function loadLocal(){
@@ -406,7 +411,7 @@
 
     const lastCloudMs = getLastCloudMs();
 
-    // ✅ first sync for new device
+    // first sync for new device
     if (isLocalEmpty(data) && cloudMs > 0){
       data = cloudData;
       saveLocalNow();
@@ -463,19 +468,19 @@
   let __persistTimer = null;
   function persistSoon(){
     clearTimeout(__persistTimer);
-    __persistTimer = setTimeout(() => { persist().catch(()=>{}); }, 700);
+    __persistTimer = setTimeout(() => { persist().catch(()=>{}); }, 450);
   }
 
   async function persist(){
     try{
       setSync("Saving to Google Sheets…");
-      await apiSet(TAB_NAME, CLOUD_KEY, data);
-
-      const cloud = await apiGetFull(TAB_NAME, CLOUD_KEY);
-      const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+      const updatedAt = await apiSet(TAB_NAME, CLOUD_KEY, data);
 
       clearDirty();
-      if (cloudMs) setLastCloudMs(cloudMs);
+      if (updatedAt){
+        const ms = Date.parse(updatedAt);
+        if (ms) setLastCloudMs(ms);
+      }
 
       setSync("Saved to Google Sheets (syncs across devices).");
     }catch(e){
@@ -996,14 +1001,14 @@
 
   // ===== Init =====
   (async function init(){
-    // make month consistent on load
     setMonth(loadLastMonth());
 
     setEditMode(false);
     await initLoad();
     setSync("Ready. Auto-saves sync across devices (Google Sheets).");
 
-    setInterval(pollCloud, 2000);
+    // Poll every 3 seconds (less load, still near-real-time)
+    setInterval(pollCloud, 3000);
   })();
 </script>
 </body>
