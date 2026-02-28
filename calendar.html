@@ -6,14 +6,8 @@
   <title>Torre KBR • Booking Calendar (2026)</title>
   <style>
     :root{
-      --bg:#ffffff;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --shadow:0 10px 28px rgba(17,24,39,.08);
-      --accent:#2563eb;
-
+      --bg:#ffffff; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --shadow:0 10px 28px rgba(17,24,39,.08); --accent:#2563eb;
       --availBg:#dcfce7; --availText:#166534; --availBorder:#bbf7d0;
       --bookBg:#fee2e2; --bookText:#991b1b; --bookBorder:#fecaca;
     }
@@ -146,29 +140,17 @@
 </div>
 
 <script>
-  // =========================
-  // FIX #1: utilities shim
-  // =========================
-  // Prevents "utilities.parseQueryString is not a function" even if an older call exists.
-  window.utilities = window.utilities || {};
-  window.utilities.parseQueryString = window.utilities.parseQueryString || function(qs){
-    const out = {};
-    const s = String(qs || "").replace(/^\?/, "");
-    for (const [k, v] of new URLSearchParams(s)) out[k] = v;
-    return out;
-  };
-
   // ====== Config ======
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
   const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
 
-  // Cross-device sync markers
+  // Sync markers
   const CLOUD_LAST_KEY = `torre-kbr-cloud-updatedAt-${YEAR}`;
   const DIRTY_KEY = `torre-kbr-dirty-${YEAR}`;
   const DIRTY_AT_KEY = `torre-kbr-dirtyAt-${YEAR}`;
 
-  // ====== Remote storage (Google Sheets via Apps Script) ======
+  // Google Apps Script Web App (/exec)
   const API_URL = "https://script.google.com/macros/s/AKfycbxOFyMBHNUrKFQVU8DsLU4eKq1wbSFORc5bwm9tsCpfQQ2yPvCnzyteAhUVhqnaZZerOQ/exec";
   const API_KEY = "kbr_super_secret_2026";
   const CAL_TAB = "calendar";
@@ -178,27 +160,6 @@
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
   let data = {};
-
-  // ===== iOS Background Scroll Lock =====
-  let __scrollY = 0;
-  function lockBodyScroll(){
-    __scrollY = window.scrollY || 0;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${__scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
-  }
-  function unlockBodyScroll(){
-    const top = document.body.style.top;
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
-    const y = top ? Math.abs(parseInt(top, 10)) : __scrollY;
-    window.scrollTo(0, y || 0);
-  }
 
   // ====== Elements ======
   const monthSelect = document.getElementById("monthSelect");
@@ -225,6 +186,27 @@
 
   function setStatus(msg){ if (saveStatus) saveStatus.textContent = msg; }
 
+  // ===== iOS Background Scroll Lock =====
+  let __scrollY = 0;
+  function lockBodyScroll(){
+    __scrollY = window.scrollY || 0;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${__scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+  }
+  function unlockBodyScroll(){
+    const top = document.body.style.top;
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+    const y = top ? Math.abs(parseInt(top, 10)) : __scrollY;
+    window.scrollTo(0, y || 0);
+  }
+
   // ===== Month memory =====
   function loadLastMonth(){
     try{
@@ -249,6 +231,8 @@
     }catch{}
   }
   function clearDirty(){ try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{} }
+  function getDirtyAt(){ try{ return Number(localStorage.getItem(DIRTY_AT_KEY) || "0") || 0; }catch{ return 0; } }
+
   function getLastCloudMs(){
     try{
       const raw = localStorage.getItem(CLOUD_LAST_KEY);
@@ -257,6 +241,10 @@
     }catch{ return 0; }
   }
   function setLastCloudMs(ms){ try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{} }
+
+  function canUseNet(){
+    try{ return navigator.onLine !== false; }catch{ return true; }
+  }
 
   // ===== JSONP Helper (CORS-safe GET) =====
   function jsonp(url){
@@ -270,52 +258,29 @@
       window[cb] = (res) => { cleanup(); resolve(res); };
       s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
 
-      // EXTRA cache buster for Safari
       const bust = `__bust=${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      s.src = url
-        + (url.includes("?") ? "&" : "?")
-        + "callback=" + encodeURIComponent(cb)
-        + "&" + bust;
-
+      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb) + "&" + bust;
       document.body.appendChild(s);
     });
   }
 
-  // ===== Cloud API =====
   async function apiGetFull(tab, k){
-    const ts = Date.now(); // cache buster
-    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${ts}`;
+    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${Date.now()}`;
     const out = await jsonp(url);
     if (!out || !out.ok) throw new Error(out?.error || "GET failed");
     return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
-  // =========================
-  // FIX #2: Harden POST save
-  // - Try normal fetch+json
-  // - If Google blocks reading response, fallback to no-cors
-  //   (sync confirmation will happen via poll)
-  // =========================
-  async function apiSet(tab, k, obj){
+  // ====== POST save (fire-and-forget; confirm by polling) ======
+  async function apiSetFireAndForget(tab, k, obj){
     const form = new URLSearchParams();
     form.set("key", API_KEY);
     form.set("tab", tab);
     form.set("k", k);
     form.set("data", JSON.stringify(obj ?? {}));
 
-    // Attempt 1: normal (read JSON response)
-    try{
-      const res = await fetch(API_URL, { method: "POST", body: form });
-      if (!res.ok) throw new Error(`POST failed (${res.status})`);
-      const j = await res.json().catch(()=> ({}));
-      if (j && j.ok === false) throw new Error(j.error || "POST failed");
-      return j.updatedAt || null;
-    }catch(err){
-      // Attempt 2: fire-and-forget (prevents CORS/redirect read failures)
-      await fetch(API_URL, { method: "POST", body: form, mode: "no-cors" });
-      // Can't read updatedAt here; pollCloud will verify
-      return null;
-    }
+    // no-cors avoids CORS read issues; request still reaches Apps Script
+    await fetch(API_URL, { method: "POST", body: form, mode: "no-cors", keepalive: true }).catch(()=>{});
   }
 
   function loadLocal(){
@@ -332,14 +297,15 @@
     catch{ return true; }
   }
 
-  // Apply cloud only when safe
+  // Apply cloud only when safe (not editing, not dirty)
   function applyCloudIfNewer(cloudData, cloudMs){
     if (!cloudData || typeof cloudData !== "object") return false;
     if (isDirty()) return false;
+    if (modalOverlay && modalOverlay.style.display === "flex") return false;
 
     const lastCloudMs = getLastCloudMs();
 
-    // NEW DEVICE FIRST SYNC: if local empty, always accept cloud
+    // New device first sync: accept cloud if local empty
     if (isLocalEmpty(data) && cloudMs > 0){
       data = cloudData;
       saveLocalNow();
@@ -355,20 +321,16 @@
       render();
       return true;
     }
-
     return false;
   }
 
   async function initLoad(){
-    // local first
     data = loadLocal();
     render();
 
-    // then cloud
     try{
       setStatus("Loading from Google Sheets…");
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
-
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
 
@@ -378,57 +340,77 @@
       }
 
       const changed = applyCloudIfNewer(cloudData, cloudMs);
-      setStatus(changed ? "Loaded from Google Sheets (sync across devices)." : "Ready.");
+      setStatus(changed ? "Loaded from Google Sheets." : "Ready.");
     }catch(e){
       console.warn("Cloud load failed; using local.", e);
-      setStatus("Offline: using local cache. (Cloud load failed)");
+      setStatus("Using local cache (cloud not reachable).");
     }
   }
 
-  // Debounced background save
+  // ===== Persist logic (reliable) =====
   let __saveTimer = null;
   function persistSoon(){
     clearTimeout(__saveTimer);
-    __saveTimer = setTimeout(() => { persist().catch(()=>{}); }, 450);
+    __saveTimer = setTimeout(() => { persist().catch(()=>{}); }, 250);
   }
 
   async function persist(){
+    // IMPORTANT: don't clear DIRTY here. We only clear once we SEE updatedAt changed in poll.
     setStatus("Saving…");
-    try{
-      const updatedAt = await apiSet(CAL_TAB, CAL_KEY, data);
-
-      // Save always remains local; cloud confirmation can be immediate (updatedAt) or via poll
-      clearDirty();
-
-      if (updatedAt){
-        const ms = Date.parse(updatedAt);
-        if (ms) setLastCloudMs(ms);
-        setStatus("Saved to Google Sheets (syncs across devices).");
-      }else{
-        // no-cors path: confirm by polling
-        setStatus("Saved. Verifying cloud sync…");
-      }
-    }catch(e){
-      console.warn("Cloud save failed; kept locally.", e);
-      setStatus("Saved locally only (cloud sync failed).");
-      markDirty();
-    }
+    await apiSetFireAndForget(CAL_TAB, CAL_KEY, data);
+    setStatus("Saving… (syncing)");
   }
 
-  // Auto-poll cloud (only when not editing and not dirty)
-  async function pollCloud(){
-    if (isDirty()) return;
-    if (modalOverlay && modalOverlay.style.display === "flex") return;
+  async function flushIfDirty(){
+    try{
+      if (!isDirty()) return;
+      if (!canUseNet()) return;
+      await persist();
+    }catch{}
+  }
 
+  // ===== Cloud poll =====
+  async function pollCloud(){
+    if (!canUseNet()) return;
+
+    // We ALWAYS poll to check if our DIRTY save has landed (updatedAt confirmation)
     try{
       const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
       const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
       const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
 
+      // If we are dirty: confirm our save landed by checking updatedAt >= dirtyAt
+      if (isDirty()){
+        const dirtyAt = getDirtyAt();
+        if (cloudMs && dirtyAt && cloudMs >= (dirtyAt - 2000)){
+          clearDirty();
+          setLastCloudMs(cloudMs);
+          setStatus("Saved ✓ (synced)");
+        } else {
+          // keep retrying while dirty (handled by retry interval)
+          setStatus("Saving… (syncing)");
+        }
+        return;
+      }
+
       const changed = applyCloudIfNewer(cloudData, cloudMs);
-      if (changed) setStatus("Synced from Google Sheets.");
+      if (changed) setStatus("Updated ✓ (synced)");
     }catch{}
   }
+
+  // Auto retry saves while DIRTY
+  setInterval(() => {
+    if (!canUseNet()) return;
+    if (!isDirty()) return;
+    if (modalOverlay && modalOverlay.style.display === "flex") return;
+    persist().catch(()=>{});
+  }, 2500);
+
+  // Flush on exit / background
+  window.addEventListener("pagehide", flushIfDirty);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushIfDirty();
+  });
 
   // ===== Month selector =====
   MONTHS.forEach((m, idx) => {
@@ -656,14 +638,25 @@
     return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
   }
 
+  // ===== Init =====
   (async function init(){
     setMonth(loadLastMonth());
     render();
     await initLoad();
-    setStatus("Ready. Changes sync across devices when you Save.");
+    setStatus("Ready ✓ (sync enabled)");
 
-    // Poll every 3 seconds (less load, still near-real-time)
-    setInterval(pollCloud, 3000);
+    // Poll faster when visible
+    setInterval(() => {
+      if (document.visibilityState === "visible") pollCloud();
+    }, 1500);
+
+    // Poll slower when hidden
+    setInterval(() => {
+      if (document.visibilityState !== "visible") pollCloud();
+    }, 6000);
+
+    // Initial poll
+    pollCloud();
   })();
 </script>
 </body>
