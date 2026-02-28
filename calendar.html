@@ -149,8 +149,6 @@
   // ====== Config ======
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
-
-  // ✅ New: remember last opened month
   const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
 
   // ====== Remote storage (Google Sheets via Apps Script JSONP) ======
@@ -163,6 +161,7 @@
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
   let data = {}; // loaded on init
+  let isDirty = false; // unsaved changes in modal
 
   // ===== iOS Background Scroll Lock =====
   let __scrollY = 0;
@@ -206,14 +205,13 @@
 
   const exportBtn = document.getElementById("exportBtn");
   const importBtn = document.getElementById("importBtn");
-
   const saveStatus = document.getElementById("saveStatus");
 
   function setStatus(msg){
     if (saveStatus) saveStatus.textContent = msg;
   }
 
-  // ✅ New helpers: persist month selection
+  // ===== Month memory (local only) =====
   function loadLastMonth(){
     try{
       const raw = localStorage.getItem(LAST_MONTH_KEY);
@@ -239,7 +237,7 @@
     render();
   }
 
-  // ===== JSONP Helper =====
+  // ===== JSONP Helper (with cache-buster) =====
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -250,7 +248,12 @@
       };
       window[cb] = (res) => { cleanup(); resolve(res); };
       s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
-      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb);
+
+      // ✅ cache-buster so other devices always pull newest
+      const ts = Date.now();
+      s.src = url + (url.includes("?") ? "&" : "?") +
+        "callback=" + encodeURIComponent(cb) + "&ts=" + ts;
+
       document.body.appendChild(s);
     });
   }
@@ -263,7 +266,10 @@
   }
 
   async function apiSet(tab, k, obj){
-    const raw = encodeURIComponent(JSON.stringify(obj));
+    // add a tiny metadata field to help debugging / freshness (safe to store)
+    const payload = { ...obj, __updatedAt: new Date().toISOString() };
+
+    const raw = encodeURIComponent(JSON.stringify(payload));
     const url = `${API_URL}?op=set&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&data=${raw}`;
     const out = await jsonp(url);
     if (!out || !out.ok) throw new Error(out?.error || "SET failed");
@@ -279,6 +285,39 @@
     }
   }
 
+  function saveLocal(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+  }
+
+  function stripMeta(obj){
+    // remove helper fields if present
+    if (obj && typeof obj === "object" && obj.__updatedAt) {
+      const copy = { ...obj };
+      delete copy.__updatedAt;
+      return copy;
+    }
+    return obj;
+  }
+
+  async function refreshFromCloud({ silent=false } = {}){
+    if (isDirty) return; // don’t overwrite unsaved edits
+    try{
+      if (!silent) setStatus("Refreshing from Google Sheets…");
+      const cloud = await apiGet(CAL_TAB, CAL_KEY);
+      if (cloud && typeof cloud === "object"){
+        data = stripMeta(cloud) || {};
+        saveLocal();
+        render();
+        if (!silent) setStatus("Synced: latest data loaded.");
+      } else {
+        if (!silent) setStatus("No cloud data yet.");
+      }
+    }catch(e){
+      console.warn("Cloud refresh failed", e);
+      if (!silent) setStatus("Refresh failed (offline or blocked).");
+    }
+  }
+
   async function initLoad(){
     // local first
     data = loadLocal();
@@ -289,8 +328,8 @@
       setStatus("Loading from Google Sheets…");
       const cloud = await apiGet(CAL_TAB, CAL_KEY);
       if (cloud && typeof cloud === "object"){
-        data = cloud;
-        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+        data = stripMeta(cloud) || {};
+        saveLocal();
         render();
         setStatus("Loaded from Google Sheets (sync across devices).");
       } else {
@@ -311,14 +350,16 @@
 
   async function persist(){
     setStatus("Saving…");
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+    saveLocal();
 
     try{
       await apiSet(CAL_TAB, CAL_KEY, data);
+      isDirty = false;
       setStatus("Saved to Google Sheets (syncs across devices).");
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
-      setStatus("Saved locally only (cloud sync failed).");
+      // IMPORTANT: show the real reason to user
+      setStatus("Saved locally only (cloud sync failed). If this happens on mobile, data may be too large for GET URL.");
     }
   }
 
@@ -330,24 +371,18 @@
     monthSelect.appendChild(opt);
   });
 
-  // ✅ New: start on last opened month (defaults to 0 = Jan)
   let currentMonth = loadLastMonth();
   monthSelect.value = String(currentMonth);
 
-  monthSelect.addEventListener("change", () => {
-    setMonth(Number(monthSelect.value));
-  });
+  monthSelect.addEventListener("change", () => setMonth(Number(monthSelect.value)));
+  prevBtn.addEventListener("click", () => setMonth(currentMonth - 1));
+  nextBtn.addEventListener("click", () => setMonth(currentMonth + 1));
+  todayBtn.addEventListener("click", () => setMonth(0));
 
-  prevBtn.addEventListener("click", () => {
-    setMonth(currentMonth - 1);
-  });
-
-  nextBtn.addEventListener("click", () => {
-    setMonth(currentMonth + 1);
-  });
-
-  todayBtn.addEventListener("click", () => {
-    setMonth(0);
+  // ✅ On tab focus / visibility, refresh from cloud so you see other device updates
+  window.addEventListener("focus", () => refreshFromCloud({ silent:true }));
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshFromCloud({ silent:true });
   });
 
   // ===== Calendar render =====
@@ -372,8 +407,8 @@
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = toISODate(YEAR, currentMonth + 1, d);
       const unitMap = getDateMap(dateStr);
-
       const counts = countStatus(unitMap);
+
       const el = document.createElement("div");
       el.className = "day";
       el.setAttribute("role","button");
@@ -422,12 +457,26 @@
   let activeDate = null;
   let workingMap = null;
 
+  // ✅ Auto-save inside modal (debounced) + still keeps Save button
+  let __autoSaveTimer = null;
+  function scheduleAutoSave(){
+    if (!activeDate || !workingMap) return;
+    isDirty = true;
+    setStatus("Editing… (auto-save pending)");
+    clearTimeout(__autoSaveTimer);
+    __autoSaveTimer = setTimeout(() => {
+      data[activeDate] = { ...workingMap };
+      persistSoon();
+      render();
+    }, 600);
+  }
+
   function openModal(dateStr){
-    // ✅ New: remember the month you were on when you opened a date
     saveLastMonth(currentMonth);
 
     activeDate = dateStr;
     workingMap = getDateMap(dateStr);
+    isDirty = false;
 
     modalTitle.textContent = `Edit Units • ${dateStr}`;
     modalSub.textContent = `Tap each unit and set it to Available or Booked.`;
@@ -453,6 +502,7 @@
       select.addEventListener("change", () => {
         workingMap[unit] = select.value;
         applySelectStyle(select);
+        scheduleAutoSave(); // ✅ auto-sync
       });
 
       card.appendChild(name);
@@ -476,13 +526,12 @@
     unlockBodyScroll();
     activeDate = null;
     workingMap = null;
+    isDirty = false;
   }
 
   closeModalBtn.addEventListener("click", closeModal);
   cancelBtn.addEventListener("click", closeModal);
-  modalOverlay.addEventListener("click", (e) => {
-    if (e.target === modalOverlay) closeModal();
-  });
+  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
@@ -492,17 +541,20 @@
     if (!workingMap) return;
     for (const u of UNITS) workingMap[u] = "available";
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="available"; applySelectStyle(s); });
+    scheduleAutoSave();
   });
 
   setAllBookedBtn.addEventListener("click", () => {
     if (!workingMap) return;
     for (const u of UNITS) workingMap[u] = "booked";
     [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="booked"; applySelectStyle(s); });
+    scheduleAutoSave();
   });
 
   saveBtn.addEventListener("click", () => {
     if (!activeDate || !workingMap) return;
     data[activeDate] = { ...workingMap };
+    isDirty = true;
     persistSoon();
     render();
     closeModal();
@@ -553,10 +605,9 @@
 
   // init
   (async function init(){
-    // render starts on last used month immediately (already set above)
     render();
     await initLoad();
-    setStatus("Ready. Changes will sync across devices when you Save.");
+    setStatus("Ready. Changes will sync across devices when you edit (auto-save) or press Save.");
   })();
 </script>
 </body>
