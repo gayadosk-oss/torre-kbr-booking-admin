@@ -149,8 +149,9 @@
   // ====== Config ======
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
+  const LOCAL_UPDATED_KEY = `torre-kbr-units-updatedAt-${YEAR}`;
 
-  // ✅ Remember last month you were editing
+  // ✅ Remember last month you were editing (device-local)
   const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
 
   // ====== Remote storage (Google Sheets via Apps Script) ======
@@ -162,7 +163,7 @@
   const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-  let data = {}; // loaded on init
+  let data = {};
 
   // ===== iOS Background Scroll Lock =====
   let __scrollY = 0;
@@ -213,15 +214,13 @@
     if (saveStatus) saveStatus.textContent = msg;
   }
 
-  // ===== Month memory helpers =====
+  // ===== Month memory =====
   function loadLastMonth(){
     try{
       const raw = localStorage.getItem(LAST_MONTH_KEY);
       const n = raw == null ? 0 : Number(raw);
       return (Number.isFinite(n) && n >= 0 && n <= 11) ? n : 0;
-    }catch{
-      return 0;
-    }
+    }catch{ return 0; }
   }
   function saveLastMonth(m){
     try{
@@ -232,7 +231,19 @@
     }catch{}
   }
 
-  // ===== JSONP Helper (for GET only) =====
+  // ===== Local updatedAt =====
+  function getLocalUpdatedAt(){
+    try{
+      const raw = localStorage.getItem(LOCAL_UPDATED_KEY);
+      const n = raw == null ? 0 : Number(raw);
+      return Number.isFinite(n) ? n : 0;
+    }catch{ return 0; }
+  }
+  function setLocalUpdatedAt(ms){
+    try{ localStorage.setItem(LOCAL_UPDATED_KEY, String(Number(ms) || Date.now())); }catch{}
+  }
+
+  // ===== JSONP Helper (CORS-safe) =====
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -249,35 +260,30 @@
   }
 
   // ===== Cloud API =====
-  async function apiGet(tab, k){
+  async function apiGetFull(tab, k){
     const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}`;
     const out = await jsonp(url);
     if (!out || !out.ok) throw new Error(out?.error || "GET failed");
-    return out.data ?? null;
+    return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
   }
 
-  // ✅ POST save (fixes “cloud sync failed” when data grows)
+  // ✅ POST save as FORM (no preflight) — matches your Apps Script doPost fallback
   async function apiSet(tab, k, obj){
-    const res = await fetch(API_URL, {
+    const form = new URLSearchParams();
+    form.set("key", API_KEY);
+    form.set("tab", tab);
+    form.set("k", k);
+    form.set("data", JSON.stringify(obj ?? {}));
+
+    // Important: do NOT set headers -> browser will send application/x-www-form-urlencoded automatically.
+    // This avoids CORS preflight that breaks Apps Script.
+    await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        key: API_KEY,
-        tab,
-        k,
-        data: obj
-      })
+      body: form
     });
 
-    // Some browsers/networks may block reading response due to CORS,
-    // but the POST can still succeed. We verify by doing a GET after save.
-    try{
-      const out = await res.json();
-      if (!out || !out.ok) throw new Error(out?.error || "POST SET failed");
-      return out;
-    }catch{
-      return { ok:true, note:"POST sent (response not readable due to CORS)" };
-    }
+    // We verify with JSONP GET (CORS-safe)
+    return true;
   }
 
   function loadLocal(){
@@ -289,22 +295,41 @@
     }
   }
 
+  function saveLocal(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+    setLocalUpdatedAt(Date.now());
+  }
+
   async function initLoad(){
-    // local first
+    // 1) local first (instant)
     data = loadLocal();
     render();
 
-    // cloud override
+    // 2) then cloud, but DO NOT blindly overwrite local
     try{
       setStatus("Loading from Google Sheets…");
-      const cloud = await apiGet(CAL_TAB, CAL_KEY);
-      if (cloud && typeof cloud === "object"){
-        data = cloud;
+      const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
+
+      const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
+      const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
+      const localMs = getLocalUpdatedAt();
+
+      if (cloudData && cloudMs >= localMs){
+        // cloud is newer (or same) -> take cloud
+        data = cloudData;
         try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+        if (cloudMs) setLocalUpdatedAt(cloudMs);
         render();
         setStatus("Loaded from Google Sheets (sync across devices).");
       } else {
-        setStatus("No cloud data yet. Your next Save will create it in Google Sheets.");
+        // local is newer OR cloud empty -> keep local, and try to push it
+        render();
+
+        if (Object.keys(data || {}).length === 0 && !cloudData){
+          setStatus("No cloud data yet. Your next Save will create it in Google Sheets.");
+        } else {
+          setStatus("Using local (newer). Will sync to Google Sheets on next Save.");
+        }
       }
     }catch(e){
       console.warn("Cloud load failed; using local.", e);
@@ -321,16 +346,23 @@
 
   async function persist(){
     setStatus("Saving…");
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+
+    // Always keep local safe first
+    saveLocal();
 
     try{
+      // send POST form (no preflight)
       await apiSet(CAL_TAB, CAL_KEY, data);
 
-      // ✅ Verify save by reloading from cloud (prevents “false OK”)
-      const cloud = await apiGet(CAL_TAB, CAL_KEY);
-      if (cloud && typeof cloud === "object"){
-        data = cloud;
+      // verify by reading back
+      const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
+      const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
+
+      if (cloudData){
+        data = cloudData;
         try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+        const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : Date.now();
+        setLocalUpdatedAt(cloudMs);
         render();
       }
 
@@ -338,6 +370,7 @@
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
       setStatus("Saved locally only (cloud sync failed).");
+      // IMPORTANT: do not overwrite local on failure
     }
   }
 
@@ -352,32 +385,17 @@
   let currentMonth = loadLastMonth();
   monthSelect.value = String(currentMonth);
 
-  monthSelect.addEventListener("change", () => {
-    currentMonth = Number(monthSelect.value);
-    saveLastMonth(currentMonth);
-    render();
-  });
-
-  prevBtn.addEventListener("click", () => {
-    currentMonth = Math.max(0, currentMonth - 1);
+  function setMonth(m){
+    currentMonth = Math.max(0, Math.min(11, Number(m) || 0));
     monthSelect.value = String(currentMonth);
     saveLastMonth(currentMonth);
     render();
-  });
+  }
 
-  nextBtn.addEventListener("click", () => {
-    currentMonth = Math.min(11, currentMonth + 1);
-    monthSelect.value = String(currentMonth);
-    saveLastMonth(currentMonth);
-    render();
-  });
-
-  todayBtn.addEventListener("click", () => {
-    currentMonth = 0;
-    monthSelect.value = "0";
-    saveLastMonth(currentMonth);
-    render();
-  });
+  monthSelect.addEventListener("change", () => setMonth(Number(monthSelect.value)));
+  prevBtn.addEventListener("click", () => setMonth(currentMonth - 1));
+  nextBtn.addEventListener("click", () => setMonth(currentMonth + 1));
+  todayBtn.addEventListener("click", () => setMonth(0));
 
   // ===== Calendar render =====
   function render() {
@@ -452,7 +470,7 @@
   let workingMap = null;
 
   function openModal(dateStr){
-    // ✅ Remember month you were editing
+    // remember month
     saveLastMonth(currentMonth);
 
     activeDate = dateStr;
@@ -533,9 +551,7 @@
     if (!activeDate || !workingMap) return;
     data[activeDate] = { ...workingMap };
 
-    // ✅ Remember where you last edited (month)
-    saveLastMonth(currentMonth);
-
+    // local + cloud
     persistSoon();
     render();
     closeModal();
@@ -570,6 +586,7 @@
           return;
         }
         data = parsed.data;
+        saveLocal();
         persistSoon();
         render();
         alert("Imported successfully!");
@@ -586,8 +603,8 @@
 
   // init
   (async function init(){
-    render(); // show last month immediately
-    await initLoad();
+    render();           // show last month immediately
+    await initLoad();   // then sync with cloud safely
     setStatus("Ready. Changes will sync across devices when you Save.");
   })();
 </script>
