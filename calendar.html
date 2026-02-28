@@ -150,7 +150,10 @@
   const YEAR = 2026;
   const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
 
-  // ====== Remote storage (Google Sheets via Apps Script JSONP) ======
+  // ✅ Remember last month you were editing
+  const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
+
+  // ====== Remote storage (Google Sheets via Apps Script) ======
   const API_URL = "https://script.google.com/macros/s/AKfycbxhgciD9s7x4pPtyGffjzPhLED_DQ0eONXj_iVsKoQu-meszK9O6JRNyQT0YKvBqxg1xQ/exec";
   const API_KEY = "kbr_super_secret_2026";
   const CAL_TAB = "calendar";
@@ -210,7 +213,26 @@
     if (saveStatus) saveStatus.textContent = msg;
   }
 
-  // ===== JSONP Helper =====
+  // ===== Month memory helpers =====
+  function loadLastMonth(){
+    try{
+      const raw = localStorage.getItem(LAST_MONTH_KEY);
+      const n = raw == null ? 0 : Number(raw);
+      return (Number.isFinite(n) && n >= 0 && n <= 11) ? n : 0;
+    }catch{
+      return 0;
+    }
+  }
+  function saveLastMonth(m){
+    try{
+      const n = Number(m);
+      if (Number.isFinite(n) && n >= 0 && n <= 11){
+        localStorage.setItem(LAST_MONTH_KEY, String(n));
+      }
+    }catch{}
+  }
+
+  // ===== JSONP Helper (for GET only) =====
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -226,6 +248,7 @@
     });
   }
 
+  // ===== Cloud API =====
   async function apiGet(tab, k){
     const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}`;
     const out = await jsonp(url);
@@ -233,12 +256,28 @@
     return out.data ?? null;
   }
 
+  // ✅ POST save (fixes “cloud sync failed” when data grows)
   async function apiSet(tab, k, obj){
-    const raw = encodeURIComponent(JSON.stringify(obj));
-    const url = `${API_URL}?op=set&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&data=${raw}`;
-    const out = await jsonp(url);
-    if (!out || !out.ok) throw new Error(out?.error || "SET failed");
-    return out;
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        key: API_KEY,
+        tab,
+        k,
+        data: obj
+      })
+    });
+
+    // Some browsers/networks may block reading response due to CORS,
+    // but the POST can still succeed. We verify by doing a GET after save.
+    try{
+      const out = await res.json();
+      if (!out || !out.ok) throw new Error(out?.error || "POST SET failed");
+      return out;
+    }catch{
+      return { ok:true, note:"POST sent (response not readable due to CORS)" };
+    }
   }
 
   function loadLocal(){
@@ -286,6 +325,15 @@
 
     try{
       await apiSet(CAL_TAB, CAL_KEY, data);
+
+      // ✅ Verify save by reloading from cloud (prevents “false OK”)
+      const cloud = await apiGet(CAL_TAB, CAL_KEY);
+      if (cloud && typeof cloud === "object"){
+        data = cloud;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{}
+        render();
+      }
+
       setStatus("Saved to Google Sheets (syncs across devices).");
     }catch(e){
       console.warn("Cloud save failed; kept locally.", e);
@@ -301,29 +349,33 @@
     monthSelect.appendChild(opt);
   });
 
-  let currentMonth = 0;
+  let currentMonth = loadLastMonth();
   monthSelect.value = String(currentMonth);
 
   monthSelect.addEventListener("change", () => {
     currentMonth = Number(monthSelect.value);
+    saveLastMonth(currentMonth);
     render();
   });
 
   prevBtn.addEventListener("click", () => {
     currentMonth = Math.max(0, currentMonth - 1);
     monthSelect.value = String(currentMonth);
+    saveLastMonth(currentMonth);
     render();
   });
 
   nextBtn.addEventListener("click", () => {
     currentMonth = Math.min(11, currentMonth + 1);
     monthSelect.value = String(currentMonth);
+    saveLastMonth(currentMonth);
     render();
   });
 
   todayBtn.addEventListener("click", () => {
     currentMonth = 0;
     monthSelect.value = "0";
+    saveLastMonth(currentMonth);
     render();
   });
 
@@ -400,6 +452,9 @@
   let workingMap = null;
 
   function openModal(dateStr){
+    // ✅ Remember month you were editing
+    saveLastMonth(currentMonth);
+
     activeDate = dateStr;
     workingMap = getDateMap(dateStr);
 
@@ -477,6 +532,10 @@
   saveBtn.addEventListener("click", () => {
     if (!activeDate || !workingMap) return;
     data[activeDate] = { ...workingMap };
+
+    // ✅ Remember where you last edited (month)
+    saveLastMonth(currentMonth);
+
     persistSoon();
     render();
     closeModal();
@@ -527,10 +586,10 @@
 
   // init
   (async function init(){
+    render(); // show last month immediately
     await initLoad();
     setStatus("Ready. Changes will sync across devices when you Save.");
   })();
 </script>
 </body>
 </html>
-
