@@ -131,20 +131,33 @@
     const firstDay = new Date(YEAR, currentMonth, 1).getDay();
     const daysInMonth = new Date(YEAR, currentMonth + 1, 0).getDate();
     
+    // Padding for previous month
     for(let i=0; i<firstDay; i++) grid.appendChild(Object.assign(document.createElement("div"), {className: "day muted"}));
     
+    // Create each day
     for(let d=1; d<=daysInMonth; d++) {
       const dateStr = `${YEAR}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dayData = data[dateStr] || {};
-      const div = document.createElement("div"); div.className = "day"; div.onclick = () => openModal(dateStr);
+      const div = document.createElement("div"); 
+      div.className = "day"; 
+      div.onclick = () => openModal(dateStr);
       
       let html = `<div class="date">${d}</div>`;
-      UNITS.forEach(u => {
-        const uD = dayData[u] || { exists: false, remarks: "" };
-        const isB = uD.exists;
-        let val = uD.remarks || (isB ? "BOOKED" : "");
-        html += `<div class="unitRow ${isB?'booked':''}"><span class="uLab">${u}</span><span class="uVal">${val}</span></div>`;
-      });
+      
+      // Get only the units that actually have a booking
+      const bookedUnits = UNITS.filter(u => dayData[u] && dayData[u].exists);
+
+      if (bookedUnits.length > 0) {
+        bookedUnits.forEach(u => {
+          const uD = dayData[u];
+          let val = uD.remarks || "BOOKED";
+          html += `<div class="unitRow booked"><span class="uLab">${u}</span><span class="uVal">${val}</span></div>`;
+        });
+      } else {
+        // Optional: show something when the day is empty
+        html += `<div style="color:var(--muted); font-style:italic; font-size:10px; margin-top:10px; text-align:center;">— Available —</div>`;
+      }
+
       div.innerHTML = html;
       grid.appendChild(div);
     }
