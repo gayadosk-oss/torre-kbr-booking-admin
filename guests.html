@@ -13,6 +13,7 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text)}
     
+    /* Header matches Planner style */
     header{padding:16px; border-bottom:1px solid var(--border); background:#fff; position:sticky; top:0; z-index:50}
     .headerInner{max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between}
     h1{margin:0; font-size:20px; font-weight:800}
@@ -35,9 +36,19 @@
     tbody tr:hover { background: #f8fafc; cursor: pointer; }
     .bal { color: var(--danger); font-weight: 800; }
 
-    /* MODAL STYLES */
-    .modalOverlay{position:fixed; inset:0; background:rgba(15, 23, 42, 0.6); display:none; align-items:center; justify-content:center; z-index:100; padding:10px; backdrop-filter: blur(4px)}
-    .modal{background:#fff; width:100%; max-width:600px; border-radius:16px; padding:20px; max-height:95vh; overflow-y:auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);}
+    /* MODAL OVERLAY - Fixed for Mobile Cutoff */
+    .modalOverlay{
+      position:fixed; inset:0; background:rgba(15, 23, 42, 0.6); 
+      display:none; justify-content:center; align-items:center; 
+      z-index:100; padding:20px; backdrop-filter: blur(4px);
+      overflow-y: auto; /* Allows overlay to scroll */
+    }
+
+    .modal{
+      background:#fff; width:100%; max-width:600px; border-radius:16px; 
+      padding:24px; position: relative; margin: auto;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
     
     .formGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .full{ grid-column: span 2; }
@@ -51,14 +62,15 @@
 
     /* MOBILE SPECIFIC FIXES */
     @media (max-width: 600px) {
+      .modalOverlay { align-items: flex-start; padding: 10px; padding-top: 50px; }
+      .modal { padding: 20px; border-radius: 12px; margin-bottom: 50px; }
       .headerInner h1 { font-size: 16px; }
       .toolbar { flex-direction: column; align-items: stretch; }
       .formGrid { grid-template-columns: 1fr; }
       .full { grid-column: span 1; }
-      .modal { padding: 16px; }
       .actions { flex-direction: column-reverse; }
-      .btn-save, .btn-cancel { width: 100%; }
-      .btn-del { width: 100%; text-align: center; margin-bottom: 10px; }
+      .btn-save, .btn-cancel { width: 100%; height: 50px; }
+      .btn-del { width: 100%; text-align: center; margin-bottom: 15px; }
     }
 
     .fab { position:fixed; bottom:24px; right:24px; width:60px; height:60px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; border:none; box-shadow:0 4px 15px rgba(37,99,235,0.4); cursor:pointer; z-index: 60;}
@@ -113,10 +125,10 @@
       <div class="field"><label>Check-In Date</label><input type="date" id="Check-In"></div>
       <div class="field full"><label>Guest Name</label><input id="Name"></div>
       <div class="field"><label>Unit</label><select id="Unit"></select></div>
-      <div class="field"><label># of Pax</label><input type="text" id="# of Pax"></div>
-      <div class="field"><label>Total</label><input type="number" id="Total"></div>
-      <div class="field"><label>DP</label><input type="number" id="DP"></div>
-      <div class="field"><label>Balance</label><input type="number" id="Balance"></div>
+      <div class="field"><label># of Pax</label><input type="text" id="# of Pax" placeholder="e.g. 2+1"></div>
+      <div class="field"><label>Total (Amount)</label><input type="text" id="Total"></div>
+      <div class="field"><label>DP (Amount)</label><input type="text" id="DP"></div>
+      <div class="field"><label>Balance (Amount)</label><input type="text" id="Balance"></div>
       <div class="field"><label>M.O.P</label><input id="MOP"></div>
       <div class="field full"><label>Contact No.</label><input id="CP No."></div>
       <div class="field full"><label>Remarks</label><input id="Remarks"></div>
@@ -132,7 +144,7 @@
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbzv3aXkkAihx0hiR5tFx3VlabaYpLiAdqaysldk-0RwcyMNTW_1qfbANudn9FkSIllCdQ/exec"; 
   const API_KEY = "kbr_super_secret_2026";
-  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
+  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","RM A","RM B","RM C"];
   let RAW_RECORDS = [];
 
   const uSelect = document.getElementById("Unit");
@@ -227,9 +239,16 @@
     } catch(e) { alert("Delete failed."); }
   }
 
-  function openModal() { document.getElementById("modalOverlay").style.display="flex"; }
+  function openModal() { 
+    const overlay = document.getElementById("modalOverlay");
+    overlay.style.display = "flex"; 
+    overlay.scrollTop = 0; 
+    document.body.style.overflow = "hidden";
+  }
+
   function closeModal() { 
-    document.getElementById("modalOverlay").style.display="none"; 
+    document.getElementById("modalOverlay").style.display = "none"; 
+    document.body.style.overflow = "auto";
     document.getElementById("BookingID").value = "";
     document.getElementById("deleteBtn").style.display = "none";
     document.getElementById("modalTitle").innerText = "Add Guest Record";
