@@ -2,662 +2,216 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Torre KBR • Booking Calendar (2026)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" />
+  <title>Torre KBR • Planner</title>
   <style>
     :root{
-      --bg:#ffffff; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
-      --shadow:0 10px 28px rgba(17,24,39,.08); --accent:#2563eb;
-      --availBg:#dcfce7; --availText:#166534; --availBorder:#bbf7d0;
-      --bookBg:#fee2e2; --bookText:#991b1b; --bookBorder:#fecaca;
+      --bg:#f8fafc; --card:#ffffff; --text:#1e293b; --muted:#64748b; --border:#e2e8f0;
+      --shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --accent:#2563eb; --bookBg:#fee2e2; --bookText:#991b1b;
+      --dateCircleBg: #e0f2fe; --dateTextColor: #0369a1; --error:#dc2626;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
-    header{padding:16px 16px 12px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:5}
-    .headerInner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{margin:0;font-size:20px;letter-spacing:.2px}
-    .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
-    .mainLink{text-decoration:none;background:#111827;color:#fff;padding:8px 16px;border-radius:10px;font-weight:700;font-size:14px;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
-    .left,.right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    select,button,input{border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;background:#fff;color:var(--text);min-height:40px}
-    button{cursor:pointer}
-    button.primary{background:var(--accent);color:#fff;border-color:transparent}
-    button.ghost{background:#fff}
-    .grid{margin-top:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
-    .monthTitle{display:flex;align-items:baseline;justify-content:space-between;padding:6px 6px 10px;gap:10px;flex-wrap:wrap}
-    .monthTitle strong{font-size:18px}
-    .monthTitle span{color:var(--muted);font-size:13px}
-    .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:0 6px 8px}
-    .dow div{color:var(--muted);font-weight:800;font-size:12px;text-transform:uppercase}
-    .days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;padding:0 6px 6px;align-items:stretch}
-    .day{min-height:92px;border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff;display:flex;flex-direction:column;gap:8px;transition:transform .05s ease, box-shadow .05s ease;position:relative;outline:none}
-    .day:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(17,24,39,.06)}
-    .day.muted{background:#fafafa;color:#9ca3af}
-    .date{font-weight:900;font-size:13px}
-    .miniRow{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
-    .pill{font-size:11px;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid transparent;line-height:1.1}
-    .pill.av{background:var(--availBg);color:var(--availText);border-color:var(--availBorder)}
-    .pill.bk{background:var(--bookBg);color:var(--bookText);border-color:var(--bookBorder)}
-    .hint{font-size:11px;color:var(--muted)}
-    .modalOverlay{position:fixed;inset:0;background:rgba(17,24,39,.55);display:none;overflow:auto;-webkit-overflow-scrolling:touch;padding:16px;z-index:50;align-items:flex-start;justify-content:center}
-    .modal{width:min(820px,100%);background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);border:1px solid var(--border);max-height:calc(100vh - 32px);overflow:auto;-webkit-overflow-scrolling:touch;margin:0 auto;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
-    .modalHeader{position:sticky;top:0;background:#fff;z-index:5;margin:-14px -14px 0;padding:14px;border-bottom:1px solid var(--border);border-top-left-radius:16px;border-top-right-radius:16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .modalHeader strong{font-size:16px}
-    .modalHeader button{padding:8px 10px}
-    .modalBody{margin-top:12px;display:grid;gap:12px}
-    .unitGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-    .unitCard{border:1px solid var(--border);border-radius:14px;padding:10px;background:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .unitName{font-weight:950;font-size:13px}
-    .unitSelect{width:140px;padding:8px 10px;border-radius:12px;font-weight:900;border:1px solid var(--border);background:#fff}
-    .unitSelect.av{background:var(--availBg);color:var(--availText);border-color:var(--availBorder)}
-    .unitSelect.bk{background:var(--bookBg);color:var(--bookText);border-color:var(--bookBorder)}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:12px}
-    .actionsLeft,.actionsRight{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .small{font-size:12px;color:var(--muted)}
-    .footerNote{margin-top:10px;color:var(--muted);font-size:12px;text-align:center}
-    @media (max-width:860px){.unitGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:720px){.dow{display:none}.days{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:520px){
-      .day{min-height:82px}
-      .unitGrid{grid-template-columns:1fr}
-      .unitSelect{width:160px}
-      .headerInner{flex-direction:column;align-items:flex-start}
-      .mainLink{align-self:flex-end}
-    }
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text)}
+    header{padding:16px; border-bottom:1px solid var(--border); background:#fff; position:sticky; top:0; z-index:50}
+    .headerInner{max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between}
+    h1{margin:0; font-size:20px; font-weight:800}
+    .mainLink{text-decoration:none; background:#0f172a; color:#fff; padding:8px 16px; border-radius:8px; font-weight:600; font-size:14px}
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
+    .toolbar{display:flex; gap:12px; align-items:center; justify-content:space-between; background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px; box-shadow:var(--shadow); margin-bottom:20px}
+    select, button, input[type="text"]{border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:14px}
+    button{cursor:pointer; font-weight:600; background:#fff}
+    button.primary{background:var(--accent); color:#fff; border:none; padding:10px 20px}
+    .grid{background:#fff; border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow)}
+    .dow{display:grid; grid-template-columns:repeat(7,1fr); text-align:center; padding-bottom:12px; font-weight:700; font-size:12px; color:var(--muted); text-transform:uppercase}
+    .days{display:grid; grid-template-columns:repeat(7,1fr); gap:12px}
+    .day{min-height:170px; border:1px solid #f1f5f9; border-radius:10px; padding:10px; cursor:pointer; font-size:11px; display:flex; flex-direction:column; gap:4px}
+    .day:hover{border-color:var(--accent); background:#fcfcfc}
+    .day.muted{opacity:0.2; pointer-events:none; background:#f8fafc}
+    .date{width:26px; height:26px; background:var(--dateCircleBg); color:var(--dateTextColor); display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:800; margin-bottom:6px}
+    .unitRow{display:flex; justify-content:space-between; padding:3px 6px; border-radius:6px; border-bottom:1px solid #f8fafc}
+    .unitRow.booked{background:var(--bookBg); color:var(--bookText); font-weight:700}
+    .uLab{font-weight:800; opacity:0.7; width:35px}
+    .uVal{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; text-align:right}
+    .modalOverlay{position:fixed; inset:0; background:rgba(15, 23, 42, 0.6); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; backdrop-filter: blur(4px)}
+    .modal{background:#fff; width:100%; max-width:650px; border-radius:16px; padding:24px; max-height:90vh; overflow-y:auto}
+    .unitGrid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .unitCard{border:1px solid var(--border); padding:12px; border-radius:10px; display:flex; align-items:center; gap:12px; background:#f8fafc}
+    .actions{margin-top:24px; display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border); padding-top:20px}
+    @media (max-width:850px){ .days{grid-template-columns:repeat(2,1fr)} .unitGrid{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
-
-<header>
-  <div class="headerInner">
-    <div style="text-align:left;">
-      <h1>Torre KBR • Booking Calendar</h1>
-      <p class="sub">2026 • Click a date → Set units to Available or Booked</p>
-    </div>
-    <a class="mainLink" href="index.html">⬅ Main Menu</a>
-  </div>
-</header>
-
+<header><div class="headerInner"><h1>Torre KBR Planner</h1><a href="index.html" class="mainLink">Main Menu</a></div></header>
 <div class="wrap">
   <div class="toolbar">
-    <div class="left">
-      <span class="small"><b>Month</b></span>
-      <select id="monthSelect"></select>
-      <button class="ghost" id="prevBtn" type="button">◀ Prev</button>
-      <button class="ghost" id="nextBtn" type="button">Next ▶</button>
-      <button class="ghost" id="todayBtn" type="button">Go to Jan 2026</button>
+    <div>
+      <select id="monthSelect"></select> 
+      <button onclick="changeMonth(-1)">◀</button> 
+      <button onclick="changeMonth(1)">▶</button>
     </div>
-    <div class="right">
-      <button class="ghost" id="exportBtn" type="button">Export</button>
-      <button class="ghost" id="importBtn" type="button">Import</button>
+    <div>
+      <span id="saveStatus" style="font-weight:700; font-size:13px; margin-right:12px;">Ready</span>
+      <button onclick="fetchCloudData()">🔄 Sync Now</button>
     </div>
   </div>
-
   <div class="grid">
-    <div class="monthTitle">
-      <strong id="monthTitle"></strong>
-      <span id="monthMeta"></span>
-    </div>
-
-    <div class="dow">
-      <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-    </div>
-
-    <div class="days" id="daysGrid"></div>
+    <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+    <div id="daysGrid" class="days"></div>
   </div>
-
-  <div class="footerNote">Tip: Use Export to back up / transfer to another device.</div>
 </div>
 
-<div class="modalOverlay" id="modalOverlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modalHeader">
-      <strong id="modalTitle">Edit</strong>
-      <button class="ghost" id="closeModalBtn" type="button">✕</button>
-    </div>
-
-    <div class="modalBody">
-      <div class="small" id="modalSub"></div>
-
-      <div class="unitGrid" id="unitGrid"></div>
-
-      <div class="actions">
-        <div class="actionsLeft">
-          <button class="ghost" id="setAllAvailableBtn" type="button">Set all Available</button>
-          <button class="ghost" id="setAllBookedBtn" type="button">Set all Booked</button>
-        </div>
-        <div class="actionsRight">
-          <button class="ghost" id="cancelBtn" type="button">Close</button>
-          <button class="primary" id="saveBtn" type="button">Save</button>
-        </div>
-      </div>
-
-      <div class="small" id="saveStatus">Loading from Google Sheets…</div>
+<div id="modalOverlay" class="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle" style="margin-top:0;">Update Bookings</h2>
+    <div id="unitInputs" class="unitGrid"></div>
+    <div class="actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" id="saveBtn">Save to Sheet</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ====== Config ======
   const YEAR = 2026;
-  const STORAGE_KEY = `torre-kbr-units-${YEAR}`;
-  const LAST_MONTH_KEY = `torre-kbr-last-month-${YEAR}`;
-
-  // Sync markers
-  const CLOUD_LAST_KEY = `torre-kbr-cloud-updatedAt-${YEAR}`;
-  const DIRTY_KEY = `torre-kbr-dirty-${YEAR}`;
-  const DIRTY_AT_KEY = `torre-kbr-dirtyAt-${YEAR}`;
-
-  // Google Apps Script Web App (/exec)
-  const API_URL = "https://script.google.com/macros/s/AKfycbxqw4cu9lVCLl5bYrxdvqPmFmULmuaF9ubAYKlPvbzDAQKOtRDvCuGV6SGeyMByFDZZGw/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbwIrPrfcShZBJoV_xc0B0cqMK2qRoq3B8GiXi0B3C-zqfxfTC-LBwvGsmVO_VN9ndg1kg/exec"; 
   const API_KEY = "kbr_super_secret_2026";
-  const CAL_TAB = "calendar";
-  const CAL_KEY = STORAGE_KEY;
-
-  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","ROOM A","ROOM B","ROOM C"];
+  const UNITS = ["D1","D2","C1","C2","C3","B1","B2","A1","A2","RM A","RM B","RM C"];
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-  let data = {};
-
-  // ====== Elements ======
-  const monthSelect = document.getElementById("monthSelect");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const todayBtn = document.getElementById("todayBtn");
-  const monthTitle = document.getElementById("monthTitle");
-  const monthMeta = document.getElementById("monthMeta");
-  const daysGrid = document.getElementById("daysGrid");
-
-  const modalOverlay = document.getElementById("modalOverlay");
-  const modalTitle = document.getElementById("modalTitle");
-  const modalSub = document.getElementById("modalSub");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const cancelBtn = document.getElementById("cancelBtn");
-  const saveBtn = document.getElementById("saveBtn");
-  const setAllAvailableBtn = document.getElementById("setAllAvailableBtn");
-  const setAllBookedBtn = document.getElementById("setAllBookedBtn");
-  const unitGrid = document.getElementById("unitGrid");
-
-  const exportBtn = document.getElementById("exportBtn");
-  const importBtn = document.getElementById("importBtn");
-  const saveStatus = document.getElementById("saveStatus");
-
-  function setStatus(msg){ if (saveStatus) saveStatus.textContent = msg; }
-
-  // ===== iOS Background Scroll Lock =====
-  let __scrollY = 0;
-  function lockBodyScroll(){
-    __scrollY = window.scrollY || 0;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${__scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
-  }
-  function unlockBodyScroll(){
-    const top = document.body.style.top;
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
-    const y = top ? Math.abs(parseInt(top, 10)) : __scrollY;
-    window.scrollTo(0, y || 0);
-  }
-
-  // ===== Month memory =====
-  function loadLastMonth(){
-    try{
-      const raw = localStorage.getItem(LAST_MONTH_KEY);
-      const n = raw == null ? 0 : Number(raw);
-      return (Number.isFinite(n) && n >= 0 && n <= 11) ? n : 0;
-    }catch{ return 0; }
-  }
-  function saveLastMonth(m){
-    try{
-      const n = Number(m);
-      if (Number.isFinite(n) && n >= 0 && n <= 11) localStorage.setItem(LAST_MONTH_KEY, String(n));
-    }catch{}
-  }
-
-  // ===== Dirty / Cloud markers =====
-  function isDirty(){ try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch{ return false; } }
-  function markDirty(){
-    try{
-      localStorage.setItem(DIRTY_KEY, "1");
-      localStorage.setItem(DIRTY_AT_KEY, String(Date.now()));
-    }catch{}
-  }
-  function clearDirty(){ try{ localStorage.setItem(DIRTY_KEY, "0"); }catch{} }
-  function getDirtyAt(){ try{ return Number(localStorage.getItem(DIRTY_AT_KEY) || "0") || 0; }catch{ return 0; } }
-
-  function getLastCloudMs(){
-    try{
-      const raw = localStorage.getItem(CLOUD_LAST_KEY);
-      const n = raw == null ? 0 : Number(raw);
-      return Number.isFinite(n) ? n : 0;
-    }catch{ return 0; }
-  }
-  function setLastCloudMs(ms){ try{ localStorage.setItem(CLOUD_LAST_KEY, String(Number(ms) || 0)); }catch{} }
-
-  function canUseNet(){
-    try{ return navigator.onLine !== false; }catch{ return true; }
-  }
-
-  // ===== JSONP Helper (CORS-safe GET) =====
-  function jsonp(url){
-    return new Promise((resolve, reject) => {
-      const cb = "cb_" + Math.random().toString(36).slice(2);
-      const s = document.createElement("script");
-      const cleanup = () => {
-        try { delete window[cb]; } catch {}
-        s.remove();
-      };
-      window[cb] = (res) => { cleanup(); resolve(res); };
-      s.onerror = () => { cleanup(); reject(new Error("JSONP failed")); };
-
-      const bust = `__bust=${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + encodeURIComponent(cb) + "&" + bust;
-      document.body.appendChild(s);
-    });
-  }
-
-  async function apiGetFull(tab, k){
-    const url = `${API_URL}?op=get&key=${encodeURIComponent(API_KEY)}&tab=${encodeURIComponent(tab)}&k=${encodeURIComponent(k)}&ts=${Date.now()}`;
-    const out = await jsonp(url);
-    if (!out || !out.ok) throw new Error(out?.error || "GET failed");
-    return { data: out.data ?? null, updatedAt: out.updatedAt ?? null };
-  }
-
-  // ====== POST save (fire-and-forget; confirm by polling) ======
-  async function apiSetFireAndForget(tab, k, obj){
-    const form = new URLSearchParams();
-    form.set("key", API_KEY);
-    form.set("tab", tab);
-    form.set("k", k);
-    form.set("data", JSON.stringify(obj ?? {}));
-
-    // no-cors avoids CORS read issues; request still reaches Apps Script
-    await fetch(API_URL, { method: "POST", body: form, mode: "no-cors", keepalive: true }).catch(()=>{});
-  }
-
-  function loadLocal(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    }catch{
-      return {};
-    }
-  }
-  function saveLocalNow(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch{} }
-  function isLocalEmpty(obj){
-    try{ return !obj || (typeof obj === "object" && Object.keys(obj).length === 0); }
-    catch{ return true; }
-  }
-
-  // Apply cloud only when safe (not editing, not dirty)
-  function applyCloudIfNewer(cloudData, cloudMs){
-    if (!cloudData || typeof cloudData !== "object") return false;
-    if (isDirty()) return false;
-    if (modalOverlay && modalOverlay.style.display === "flex") return false;
-
-    const lastCloudMs = getLastCloudMs();
-
-    // New device first sync: accept cloud if local empty
-    if (isLocalEmpty(data) && cloudMs > 0){
-      data = cloudData;
-      saveLocalNow();
-      setLastCloudMs(cloudMs);
-      render();
-      return true;
-    }
-
-    if (cloudMs > lastCloudMs){
-      data = cloudData;
-      saveLocalNow();
-      setLastCloudMs(cloudMs);
-      render();
-      return true;
-    }
-    return false;
-  }
-
-  async function initLoad(){
-    data = loadLocal();
-    render();
-
-    try{
-      setStatus("Loading from Google Sheets…");
-      const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
-      const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
-      const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
-
-      if (!cloudData){
-        setStatus("No cloud data yet. Your next Save will create it in Google Sheets.");
-        return;
-      }
-
-      const changed = applyCloudIfNewer(cloudData, cloudMs);
-      setStatus(changed ? "Loaded from Google Sheets." : "Ready.");
-    }catch(e){
-      console.warn("Cloud load failed; using local.", e);
-      setStatus("Using local cache (cloud not reachable).");
-    }
-  }
-
-  // ===== Persist logic (reliable) =====
-  let __saveTimer = null;
-  function persistSoon(){
-    clearTimeout(__saveTimer);
-    __saveTimer = setTimeout(() => { persist().catch(()=>{}); }, 250);
-  }
-
-  async function persist(){
-    // IMPORTANT: don't clear DIRTY here. We only clear once we SEE updatedAt changed in poll.
-    setStatus("Saving…");
-    await apiSetFireAndForget(CAL_TAB, CAL_KEY, data);
-    setStatus("Saving… (syncing)");
-  }
-
-  async function flushIfDirty(){
-    try{
-      if (!isDirty()) return;
-      if (!canUseNet()) return;
-      await persist();
-    }catch{}
-  }
-
-  // ===== Cloud poll =====
-  async function pollCloud(){
-    if (!canUseNet()) return;
-
-    // We ALWAYS poll to check if our DIRTY save has landed (updatedAt confirmation)
-    try{
-      const cloud = await apiGetFull(CAL_TAB, CAL_KEY);
-      const cloudData = (cloud.data && typeof cloud.data === "object") ? cloud.data : null;
-      const cloudMs = cloud.updatedAt ? Date.parse(cloud.updatedAt) : 0;
-
-      // If we are dirty: confirm our save landed by checking updatedAt >= dirtyAt
-      if (isDirty()){
-        const dirtyAt = getDirtyAt();
-        if (cloudMs && dirtyAt && cloudMs >= (dirtyAt - 2000)){
-          clearDirty();
-          setLastCloudMs(cloudMs);
-          setStatus("Saved ✓ (synced)");
-        } else {
-          // keep retrying while dirty (handled by retry interval)
-          setStatus("Saving… (syncing)");
-        }
-        return;
-      }
-
-      const changed = applyCloudIfNewer(cloudData, cloudMs);
-      if (changed) setStatus("Updated ✓ (synced)");
-    }catch{}
-  }
-
-  // Auto retry saves while DIRTY
-  setInterval(() => {
-    if (!canUseNet()) return;
-    if (!isDirty()) return;
-    if (modalOverlay && modalOverlay.style.display === "flex") return;
-    persist().catch(()=>{});
-  }, 2500);
-
-  // Flush on exit / background
-  window.addEventListener("pagehide", flushIfDirty);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flushIfDirty();
-  });
-
-  // ===== Month selector =====
-  MONTHS.forEach((m, idx) => {
-    const opt = document.createElement("option");
-    opt.value = idx;
-    opt.textContent = `${m} ${YEAR}`;
-    monthSelect.appendChild(opt);
-  });
-
-  let currentMonth = loadLastMonth();
-  monthSelect.value = String(currentMonth);
-
-  function setMonth(m){
-    currentMonth = Math.max(0, Math.min(11, Number(m) || 0));
-    monthSelect.value = String(currentMonth);
-    saveLastMonth(currentMonth);
-    render();
-  }
-
-  monthSelect.addEventListener("change", () => setMonth(Number(monthSelect.value)));
-  prevBtn.addEventListener("click", () => setMonth(currentMonth - 1));
-  nextBtn.addEventListener("click", () => setMonth(currentMonth + 1));
-  todayBtn.addEventListener("click", () => setMonth(0));
-
-  // ===== Calendar render =====
-  function render() {
-    const first = new Date(YEAR, currentMonth, 1);
-    const last = new Date(YEAR, currentMonth + 1, 0);
-    const firstDow = first.getDay();
-    const daysInMonth = last.getDate();
-
-    monthTitle.textContent = `${MONTHS[currentMonth]} ${YEAR}`;
-    monthMeta.textContent = `Click any date to edit unit availability`;
-    daysGrid.innerHTML = "";
-
-    for (let i = 0; i < firstDow; i++) {
-      const blank = document.createElement("div");
-      blank.className = "day muted";
-      blank.innerHTML = `<div class="date">&nbsp;</div>`;
-      daysGrid.appendChild(blank);
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = toISODate(YEAR, currentMonth + 1, d);
-      const unitMap = getDateMap(dateStr);
-
-      const counts = countStatus(unitMap);
-      const el = document.createElement("div");
-      el.className = "day";
-      el.setAttribute("role","button");
-      el.setAttribute("tabindex","0");
-
-      el.addEventListener("click", () => openModal(dateStr));
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") openModal(dateStr);
-      });
-
-      el.innerHTML = `
-        <div class="date">${MONTHS[currentMonth].slice(0,3)} ${d}</div>
-        <div class="hint">${counts.booked} booked • ${counts.available} available</div>
-        <div class="miniRow">
-          <span class="pill bk">${counts.booked} Booked</span>
-          <span class="pill av">${counts.available} Available</span>
-        </div>
-      `;
-      daysGrid.appendChild(el);
-    }
-  }
-
-  function getDateMap(dateStr){
-    const existing = data[dateStr];
-    if (existing && typeof existing === "object") {
-      const safe = {};
-      for (const u of UNITS) safe[u] = (existing[u] === "booked") ? "booked" : "available";
-      return safe;
-    }
-    const fresh = {};
-    for (const u of UNITS) fresh[u] = "available";
-    return fresh;
-  }
-
-  function countStatus(map){
-    let booked = 0, available = 0;
-    for (const u of UNITS){
-      if (map[u] === "booked") booked++;
-      else available++;
-    }
-    return { booked, available };
-  }
-
-  // ===== Modal =====
+  let data = {}; 
+  let currentMonth = new Date().getMonth();
   let activeDate = null;
-  let workingMap = null;
 
-  function openModal(dateStr){
-    saveLastMonth(currentMonth);
+  async function fetchCloudData() {
+    const statusEl = document.getElementById("saveStatus");
+    statusEl.textContent = "Syncing...";
+    statusEl.style.color = "var(--accent)";
 
-    activeDate = dateStr;
-    workingMap = getDateMap(dateStr);
+    try {
+      const resp = await fetch(`${API_URL}?t=${Date.now()}`);
+      const result = await resp.json();
+      
+      data = {}; // Reset local data cache
 
-    modalTitle.textContent = `Edit Units • ${dateStr}`;
-    modalSub.textContent = `Tap each unit and set it to Available or Booked.`;
-
-    unitGrid.innerHTML = "";
-    for (const unit of UNITS){
-      const card = document.createElement("div");
-      card.className = "unitCard";
-
-      const name = document.createElement("div");
-      name.className = "unitName";
-      name.textContent = unit;
-
-      const select = document.createElement("select");
-      select.className = "unitSelect";
-      select.innerHTML = `
-        <option value="available">Available</option>
-        <option value="booked">Booked</option>
-      `;
-      select.value = workingMap[unit] || "available";
-      applySelectStyle(select);
-
-      select.addEventListener("change", () => {
-        workingMap[unit] = select.value;
-        applySelectStyle(select);
-      });
-
-      card.appendChild(name);
-      card.appendChild(select);
-      unitGrid.appendChild(card);
-    }
-
-    lockBodyScroll();
-    modalOverlay.style.display = "flex";
-    modalOverlay.scrollTop = 0;
-  }
-
-  function applySelectStyle(sel){
-    sel.classList.remove("av","bk");
-    if (sel.value === "booked") sel.classList.add("bk");
-    else sel.classList.add("av");
-  }
-
-  function closeModal(){
-    modalOverlay.style.display = "none";
-    unlockBodyScroll();
-    activeDate = null;
-    workingMap = null;
-  }
-
-  closeModalBtn.addEventListener("click", closeModal);
-  cancelBtn.addEventListener("click", closeModal);
-  modalOverlay.addEventListener("click", (e) => { if (e.target === modalOverlay) closeModal(); });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
-  });
-
-  setAllAvailableBtn.addEventListener("click", () => {
-    if (!workingMap) return;
-    for (const u of UNITS) workingMap[u] = "available";
-    [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="available"; applySelectStyle(s); });
-  });
-
-  setAllBookedBtn.addEventListener("click", () => {
-    if (!workingMap) return;
-    for (const u of UNITS) workingMap[u] = "booked";
-    [...unitGrid.querySelectorAll("select")].forEach(s => { s.value="booked"; applySelectStyle(s); });
-  });
-
-  // Save: local immediately + mark dirty + background cloud sync
-  saveBtn.addEventListener("click", () => {
-    if (!activeDate || !workingMap) return;
-
-    data[activeDate] = { ...workingMap };
-    saveLocalNow();
-    markDirty();
-
-    render();
-    closeModal();
-
-    persistSoon();
-  });
-
-  // ===== Export / Import =====
-  exportBtn.addEventListener("click", () => {
-    const payload = JSON.stringify({ year: YEAR, units: UNITS, data }, null, 2);
-    const blob = new Blob([payload], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `torre-kbr-availability-${YEAR}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  });
-
-  importBtn.addEventListener("click", async () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      const text = await file.text();
-      try{
-        const parsed = JSON.parse(text);
-        if (!parsed || typeof parsed !== "object" || !parsed.data) {
-          alert("Invalid file.");
-          return;
+      if (result.ok) {
+        if (result.status === "empty" || !result.records || result.records.length === 0) {
+          // Success, but spreadsheet has no booking rows
+          statusEl.textContent = "Synced ✓ (no data)";
+          statusEl.style.color = "var(--muted)";
+        } else {
+          // Success, mapping data to units
+          result.records.forEach(row => {
+            const d = String(row["Date"]).trim(), u = row["Unit"];
+            if(d && u){
+              if (!data[d]) data[d] = {};
+              data[d][u] = { exists: true, remarks: String(row["Remarks"] || "").trim() };
+            }
+          });
+          statusEl.textContent = "Synced ✓";
+          statusEl.style.color = "var(--accent)";
         }
-        data = parsed.data;
-        saveLocalNow();
-        markDirty();
-        persistSoon();
-        render();
-        alert("Imported successfully!");
-      }catch{
-        alert("Invalid JSON file.");
+      } else {
+        // Script-level error (e.g. invalid tab name or permissions)
+        statusEl.textContent = "Error: " + (result.message || "Script failed");
+        statusEl.style.color = "var(--error)";
       }
-    };
-    input.click();
-  });
-
-  function toISODate(y,m,d){
-    return `${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      render(); 
+    } catch (e) { 
+        // Network error (e.g. URL mismatch or offline)
+        statusEl.textContent = "Sync Error: Connection Failed";
+        statusEl.style.color = "var(--error)";
+        console.error("Fetch Error:", e);
+        render(); // Render anyway so user can still interact
+    }
   }
 
-  // ===== Init =====
-  (async function init(){
-    setMonth(loadLastMonth());
-    render();
-    await initLoad();
-    setStatus("Ready ✓ (sync enabled)");
+  function render() {
+    const grid = document.getElementById("daysGrid"); grid.innerHTML = "";
+    const firstDay = new Date(YEAR, currentMonth, 1).getDay();
+    const daysInMonth = new Date(YEAR, currentMonth + 1, 0).getDate();
+    
+    for(let i=0; i<firstDay; i++) grid.appendChild(Object.assign(document.createElement("div"), {className: "day muted"}));
+    
+    for(let d=1; d<=daysInMonth; d++) {
+      const dateStr = `${YEAR}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayData = data[dateStr] || {};
+      const div = document.createElement("div"); div.className = "day"; div.onclick = () => openModal(dateStr);
+      
+      let html = `<div class="date">${d}</div>`;
+      UNITS.forEach(u => {
+        const uD = dayData[u] || { exists: false, remarks: "" };
+        const isB = uD.exists;
+        let val = uD.remarks || (isB ? "BOOKED" : "");
+        html += `<div class="unitRow ${isB?'booked':''}"><span class="uLab">${u}</span><span class="uVal">${val}</span></div>`;
+      });
+      div.innerHTML = html;
+      grid.appendChild(div);
+    }
+  }
 
-    // Poll faster when visible
-    setInterval(() => {
-      if (document.visibilityState === "visible") pollCloud();
-    }, 1500);
+  function openModal(dateStr) {
+    activeDate = dateStr; 
+    document.getElementById("modalTitle").textContent = "Update: " + dateStr;
+    const container = document.getElementById("unitInputs"); 
+    container.innerHTML = "";
+    const dayData = data[dateStr] || {};
+    
+    UNITS.forEach(u => {
+      const v = dayData[u] || { exists: false, remarks: "" };
+      container.innerHTML += `
+        <div class="unitCard">
+          <label style="width:35px;font-weight:800;color:var(--accent)">${u}</label>
+          <input type="checkbox" id="chk-${u}" ${v.exists ? 'checked' : ''}>
+          <input type="text" id="rem-${u}" placeholder="Remarks" value="${v.remarks}">
+        </div>`;
+    });
+    document.getElementById("modalOverlay").style.display = "flex";
+  }
 
-    // Poll slower when hidden
-    setInterval(() => {
-      if (document.visibilityState !== "visible") pollCloud();
-    }, 6000);
+  document.getElementById("saveBtn").onclick = async () => {
+    const payload = []; 
+    const idDate = activeDate.replace(/-/g, "");
+    
+    UNITS.forEach(u => {
+      const isChecked = document.getElementById(`chk-${u}`).checked;
+      const rem = document.getElementById(`rem-${u}`).value.trim();
+      payload.push({ 
+        "Booking ID": idDate + u, 
+        "Date": activeDate, 
+        "Unit": u, 
+        "Remarks": rem,
+        "_isTicked": isChecked 
+      });
+    });
+    
+    closeModal();
+    const status = document.getElementById("saveStatus");
+    status.textContent = "Saving...";
+    status.style.color = "var(--accent)";
+    
+    try {
+      await fetch(API_URL, { 
+        method: "POST", 
+        body: JSON.stringify({ key: API_KEY, data: payload }) 
+      });
+      setTimeout(fetchCloudData, 1500);
+    } catch (e) { 
+        status.textContent = "Save Failed";
+        status.style.color = "var(--error)";
+    }
+  };
 
-    // Initial poll
-    pollCloud();
-  })();
+  function closeModal() { document.getElementById("modalOverlay").style.display = "none"; }
+  function changeMonth(s) { currentMonth = (currentMonth+s+12)%12; document.getElementById("monthSelect").value = currentMonth; render(); }
+  
+  const sel = document.getElementById("monthSelect");
+  MONTHS.forEach((m, i) => sel.add(new Option(`${m} ${YEAR}`, i)));
+  sel.value = currentMonth;
+  sel.onchange = (e) => { currentMonth = parseInt(e.target.value); render(); };
+  
+  render(); 
+  fetchCloudData();
 </script>
 </body>
 </html>
