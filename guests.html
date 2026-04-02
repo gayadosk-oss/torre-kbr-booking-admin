@@ -62,7 +62,12 @@
 
     .modalOverlay{ position:fixed; inset:0; background:rgba(15, 23, 42, 0.6); display:none; justify-content:center; align-items:flex-start; z-index:100; padding:12px; backdrop-filter: blur(4px); overflow-y: auto; }
     .modal{ background:#fff; width:100%; max-width:500px; border-radius:16px; padding:20px; margin: 20px auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
-    .formGrid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; width: 100%; }
+    .formGrid{ 
+		display:grid;
+		grid-template-columns: 1fr 1fr;
+		gap:10px;
+		width: 100%;
+	}
     .full{ grid-column: span 2; }
     label{ display:block; font-size:10px; font-weight:900; color:var(--muted); margin-bottom:4px; text-transform:uppercase; }
     .field input, .field select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 16px; background: #fff; }
@@ -73,6 +78,17 @@
     .btn-del{color:var(--danger); background:none; border:none; font-weight:600; cursor:pointer;}
 
     .fab { position:fixed; bottom:20px; right:20px; width:56px; height:56px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; border:none; box-shadow:0 4px 12px rgba(37,99,235,0.4); cursor:pointer; z-index: 60;}
+	/* Removes arrows from Chrome, Safari, Edge, and Opera */
+	input::-webkit-outer-spin-button,
+	input::-webkit-inner-spin-button {
+	  -webkit-appearance: none;
+	  margin: 0;
+	}
+
+	/* Removes arrows from Firefox */
+	input[type=number] {
+	  -moz-appearance: textfield;
+	}
   </style>
 </head>
 <body>
@@ -101,7 +117,18 @@
     <table id="ledgerTable">
       <thead>
         <tr>
-          <th>Date</th><th>Name</th><th>Pax</th><th>Check-In</th><th>Unit</th><th>DP</th><th>Balance</th><th>Total</th><th>MOP</th><th>Contact</th><th>Remarks</th>
+          <th>Date</th>
+		  <th>Name</th>
+		  <th>Pax</th>
+		  <th>Check-In</th>
+		  <th>Check-Out</th>
+		  <th>Unit</th>
+		  <th>DP</th>
+		  <th>Balance</th>
+		  <th>Total</th>
+		  <th>M.O.P.</th>
+		  <th>Contact</th>
+		  <th>Remarks</th>
         </tr>
       </thead>
       <tbody id="ledgerBody">
@@ -124,14 +151,14 @@
     <h2 id="modalTitle" style="margin:0 0 15px 0; font-size: 20px;">Add Record</h2>
     <input type="hidden" id="BookingID">
     <div class="formGrid">
-      <div class="field full"><label>Booking Date</label><input type="date" id="Date"></div>
-      <div class="field full"><label>Check-In Date <span style="color:var(--danger)">*</span></label><input type="date" id="Check-In" required></div>
+      <div class="field"><label>Check-In Date <span style="color:var(--danger)">*</span></label><input type="date" id="Check-In" required></div>
+      <div class="field"><label>Check-Out Date <span style="color:var(--danger)">*</span></label><input type="date" id="Check-Out" required></div>
       <div class="field full"><label>Guest Name <span style="color:var(--danger)">*</span></label><input type="text" id="Name" required></div>
       <div class="field"><label>Unit <span style="color:var(--danger)">*</span></label><select id="Unit" required></select></div>
       <div class="field"><label># of Pax</label><input type="text" id="# of Pax" placeholder="e.g. 2+1"></div>
-      <div class="field"><label>Total</label><input type="text" id="Total"></div>
-      <div class="field"><label>DP</label><input type="text" id="DP"></div>
-      <div class="field full"><label>Balance</label><input type="text" id="Balance"></div>
+      <div class="field"><label>Total</label><input type="number" min="0" step="0.01" placeholder="0" id="Total"></div>
+      <div class="field"><label>DP</label><input type="number" min="0" step="0.01" placeholder="0" id="DP"></div>
+      <div class="field"><label>Balance</label><input type="number" min="0" step="0.01" placeholder="0" id="Balance"></div>
       <div class="field"><label>M.O.P</label><input type="text" id="MOP"></div>
       <div class="field"><label>Contact No.</label><input type="text" id="CP No."></div>
       <div class="field full"><label>Remarks</label><input type="text" id="Remarks"></div>
@@ -241,6 +268,7 @@
           <td style="font-weight:bold">${r["Name"] || ""}</td>
           <td>${r["# of Pax"] || ""}</td>
           <td>${formatDateSafe(r["Check-In"])}</td>
+		  <td>${formatDateSafe(r["Check-Out"])}</td>
           <td style="color:var(--accent);font-weight:bold">${r["Unit"] || ""}</td>
           <td>${r["DP"] || ""}</td>
           <td class="${parseFloat(r["Balance"] || 0) > 0 ? 'bal' : ''}">${r["Balance"] || ""}</td>
@@ -261,30 +289,36 @@
   function resetPageAndFilter() { currentPage = 1; filterAndSort(); }
 
   function editRecord(index) {
-    const r = RAW_RECORDS[index];
+    const r = FILTERED_RECORDS[index]; // Use FILTERED_RECORDS to match the table row clicked
     if(!r) return;
     
     document.getElementById("modalTitle").innerText = "Edit Record";
+    
+    // Ensure the ID is captured so the script knows to UPDATE instead of CREATE
     document.getElementById("BookingID").value = r["Booking ID"] || "";
     
-    const fields = ["Date","Name","# of Pax","Check-In","Unit","DP","Balance","Total","MOP","CP No.","Remarks"];
-    fields.forEach(f => {
-      const el = document.getElementById(f);
-      if(el) {
-        let val = r[f] || "";
-        if (f === "Date" || f === "Check-In") val = formatDateSafe(val);
-        el.value = val;
-      }
-    });
+    // Map the specific fields from the record to the modal inputs
+    document.getElementById("Name").value = r["Name"] || "";
+    document.getElementById("# of Pax").value = r["# of Pax"] || "";
+    document.getElementById("Check-In").value = formatDateSafe(r["Check-In"]);
+    document.getElementById("Check-Out").value = formatDateSafe(r["Check-Out"]);
+    document.getElementById("Unit").value = r["Unit"] || "";
+    document.getElementById("Total").value = r["Total"] || "";
+    document.getElementById("DP").value = r["DP"] || "";
+    document.getElementById("Balance").value = r["Balance"] || "";
+    document.getElementById("MOP").value = r["MOP"] || "";
+    document.getElementById("CP No.").value = r["CP No."] || "";
+    document.getElementById("Remarks").value = r["Remarks"] || "";
     
     document.getElementById("deleteBtn").style.display = "block";
+    document.getElementById("saveBtn").innerText = "Update"; // Visual feedback
     openModal(true); 
   }
 
   async function saveEntry() {
     //1. Mandatory Field Validation
 	//1.1. List the IDs of the fields you want to be mandatory
-    const requiredFields = ["Check-In", "Name","Unit"];
+    const requiredFields = ["Check-In","Check-Out","Name","Unit"];
     let missing = [];
 
     //1.2. Check if any of those fields are empty
@@ -300,9 +334,18 @@
     }
 	
 	//2. Prepare Data
-    const bId = document.getElementById("BookingID").value || "BK-" + Date.now();
+	const idFromForm = document.getElementById("BookingID").value;
+    const bId = idFromForm || "BK-" + Date.now();
     const entryData = { "Booking ID": bId };
-    ["Date","Name","# of Pax","Check-In","Unit","DP","Balance","Total","MOP","CP No.","Remarks"].forEach(f => {
+	
+	if (!idFromForm) {
+    const phtDate = new Intl.DateTimeFormat('en-CA', { 
+      timeZone: 'Asia/Manila' 
+    }).format(new Date());
+    
+    entryData["Date"] = phtDate;
+	}
+    ["Name","# of Pax","Check-In","Check-Out","Unit","DP","Balance","Total","MOP","CP No.","Remarks"].forEach(f => {
       entryData[f] = document.getElementById(f).value;
     });
     
@@ -359,8 +402,8 @@
     document.getElementById("modalOverlay").style.display = "flex"; 
     document.body.style.overflow = "hidden";
     if(!isEdit) {
-      const phtDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date()); 
-      document.getElementById("Date").value = phtDate;
+      document.getElementById("modalTitle").innerText = "Add Record";
+	  document.getElementById("BookingID").value = "";
     }
   }
 
