@@ -61,7 +61,15 @@
 	  background: #f8fafc; /* Slight tint to distinguish it from the top row */
 	}
 
-    #searchInput { width: 100%; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:14px; outline:none; }
+    #searchInput {
+	  width: 100%;
+	  border:1px solid var(--border);
+	  border-radius:8px;
+	  padding:10px;
+	  font-size:14px;
+	  outline:none;
+	}
+	
     #sortSelect {
 	  width: 100%;
 	  max-width: 200px;
@@ -107,9 +115,31 @@
     .btn-page { background: #fff; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .btn-page:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    .modalOverlay{ position:fixed; inset:0; background:rgba(15, 23, 42, 0.6); display:none; justify-content:center; align-items:flex-start; z-index:100; padding:12px; backdrop-filter: blur(4px); overflow-y: auto; }
-    .modal{ background:#fff; width:100%; max-width:500px; border-radius:16px; padding:20px; margin: 20px auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
-    .formGrid{ 
+    .modalOverlay{
+	  position:fixed;
+	  inset:0;
+	  background:rgba(15, 23, 42, 0.6);
+	  display:none;
+	  justify-content:center;
+	  align-items: center;
+	  z-index: 100;
+	  padding:12px;
+	  backdrop-filter: blur(4px);
+	  overflow-y: auto;
+	}
+	
+    .modal{
+	  background:#fff;
+	  width:100%;
+	  max-width: 600px;
+	  border-radius:16px; padding:20px;
+	  margin: 20px auto;
+	  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+	  max-height: 90vh;
+	  overflow-y: auto;
+	}
+    
+	.formGrid{ 
 		display:grid;
 		grid-template-columns: 1fr 1fr;
 		gap:10px;
