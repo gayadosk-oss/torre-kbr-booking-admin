@@ -145,16 +145,83 @@
 		gap:10px;
 		width: 100%;
 	}
-    .full{ grid-column: span 2; }
-    label{ display:block; font-size:10px; font-weight:900; color:var(--muted); margin-bottom:4px; text-transform:uppercase; }
-    .field input, .field select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 16px; background: #fff; }
+	
+    .full{
+	  grid-column: span 2;
+	}
+	
+    label{
+	  display:block;
+	  font-size:10px;
+	  font-weight:900;
+	  color:var(--muted);
+	  margin-bottom:4px;
+	  text-transform:uppercase;
+	}
+	
+    .field input, .field select {
+	  width: 100%;
+	  border: 1px solid var(--border);
+	  border-radius: 8px;
+	  padding: 10px;
+	  font-size: 16px;
+	  background: #fff;
+	}
 
-    .actions{margin-top:20px; display:flex; flex-wrap: wrap; justify-content:flex-end; gap:10px; border-top:1px solid var(--border); padding-top:15px}
-    .btn-save{background:var(--accent); color:#fff; border:none; padding:12px 20px; border-radius:8px; font-weight:600; cursor:pointer;}
-    .btn-cancel{background:#f1f5f9; border:none; padding:12px 15px; border-radius:8px; font-weight:600; cursor:pointer;}
-    .btn-del{color:var(--danger); background:none; border:none; font-weight:600; cursor:pointer;}
+    .actions{
+	  margin-top:20px;
+	  display:flex;
+	  flex-wrap: wrap;
+	  justify-content:flex-end;
+	  gap:10px;
+	  border-top:1px solid var(--border);
+	  padding-top:15px
+	}
+	
+    .btn-save{
+	  background:var(--accent);
+	  color:#fff;
+	  border:none;
+	  padding:12px 20px;
+	  border-radius:8px;
+	  font-weight:600;
+	  cursor:pointer;
+	}
+	
+    .btn-cancel{
+	  background:#f1f5f9;
+	  border:none;
+	  padding:12px 15px;
+	  border-radius:8px;
+	  font-weight:600;
+	  cursor:pointer;
+	}
+	
+    .btn-del{
+	  color: #fff;
+	  background: #e74c3c;
+	  border:none;
+	  padding:12px 20px;
+	  border-radius:8px;
+	  font-weight:600;
+	  cursor:pointer;
+	}
 
-    .fab { position:fixed; bottom:20px; right:20px; width:56px; height:56px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:28px; border:none; box-shadow:0 4px 12px rgba(37,99,235,0.4); cursor:pointer; z-index: 60;}
+    .fab {
+	  position:fixed;
+	  bottom:20px;
+	  right:20px;
+	  width:56px;
+	  height:56px;
+	  background:var(--accent);
+	  color:#fff; border-radius:50%;
+	  display:flex; align-items:center;
+	  justify-content:center; font-size:28px;
+	  border:none; box-shadow:0 4px 12px rgba(37,99,235,0.4);
+	  cursor:pointer;
+	  z-index: 60;
+	}
+	
 	/* Removes arrows from Chrome, Safari, Edge, and Opera */
 	input::-webkit-outer-spin-button,
 	input::-webkit-inner-spin-button {
@@ -165,6 +232,28 @@
 	/* Removes arrows from Firefox */
 	input[type=number] {
 	  -moz-appearance: textfield;
+	}
+	
+	/* Mobile Form Fix: Stacks fields vertically to prevent overlapping */
+	@media screen and (max-width: 480px) {
+	  .formGrid {
+		grid-template-columns: 1fr !important; /* Force a single column */
+		gap: 15px;
+	  }
+	  
+	  .field, .full {
+		grid-column: span 1 !important; /* Every field takes full width */
+	  }
+
+	  .modal {
+		padding: 15px;
+		width: 95%; /* Give more room for inputs */
+	  }
+	  
+	  /* Prevent inputs from bleeding out of the container */
+	  .field input, .field select {
+		font-size: 14px; /* Slightly smaller font for better mobile fit */
+	  }
 	}
   </style>
 </head>
