@@ -144,21 +144,21 @@
 	}
     
 	.formGrid{ 
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap:10px;
+		gap:15px;
 		width: 100%;
+		box-sizing: border-box;
 	}
 	
-	.field { 
-	  /* On desktop, try to take 50% width minus the gap */
-	  flex: 1 1 calc(50% - 15px); 
-	  min-width: 200px; /* If the screen is smaller than 400px, it stacks! */
+	.field {
+	  display: flex;
+	  flex-direction: column;
+	  width: 100%;
 	}
 	
     .full{
-	  grid-column: 1 1 100%;
+	  grid-column: span 2;
 	}
 	
     label{
@@ -245,6 +245,16 @@
 	/* Removes arrows from Firefox */
 	input[type=number] {
 	  -moz-appearance: textfield;
+	}
+	
+	/* Mobile: Stack everything in 1 column */
+	@media screen and (max-width: 500px) {
+	  .formGrid {
+		grid-template-columns: 1fr;
+	  }
+	  .full {
+		grid-column: span 1;
+	  }
 	}
   </style>
 </head>
