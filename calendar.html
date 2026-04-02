@@ -66,18 +66,60 @@
     #monthDisplay { font-weight: 800; font-size: 18px; flex-grow: 1; text-align: center; }
     .btn-nav { background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: bold; }
     .cal-wrap { background:#fff; border-radius:12px; border:1px solid var(--border); overflow: hidden; box-shadow:var(--shadow); }
-    table { width:100%; border-collapse:collapse; table-layout: fixed; }
+    table { 
+	  width:100%;
+	  border-collapse:collapse;
+	  table-layout: fixed;
+	  background: #fff;
+	}
     th { background:#f8fafc; color:var(--accent); padding:12px; border-bottom:2px solid var(--border); font-size: 11px; text-transform:uppercase; letter-spacing: 0.05em; }
-    td { height: 110px; vertical-align: top; padding: 6px; border: 1px solid #f1f5f9; }
-    .day-num { font-weight: 800; color: var(--muted); margin-bottom: 4px; font-size: 13px; }
-    .booking-tag { 
-      background: var(--accent);
+	td {
+	  /* This ensures the box is always at least this tall even if empty */
+	  height: 110px; 
+	  min-height: 110px;
+	  vertical-align: top;
+	  padding: 5px 0; 
+	  border: 1px solid #f1f5f9;
+	  position: relative;
+	  overflow: visible; /* Allows stacked bars to be seen */
+	}
+	td:hover {
+	  background-color: #f8fafc; /* Slight highlight on hover */
+	}
+	/* Style for days not in the current month */
+	td:empty {
+	  background: #f1f5f9;
+	  background-image: none;
+	}
+	.day-num {
+	  font-weight: 700;
+	  font-size: 13px;
+	  padding-left: 8px;
+	  margin-bottom: 4px;
+	  display: block;
+	  color: #64748b;
+	}
+	/* Highlight today's date number */
+	.today .day-num {
+	  background: var(--accent);
+	  color: white;
+	  border-radius: 50%;
+	}
+	.booking-tag {
+	  background: var(--accent);
 	  color: white;
 	  border-radius: 6px;
-	  padding: 5px 8px; 
-      font-size: 11px; font-weight: 700; margin-bottom: 4px; cursor: pointer;
-      display: flex; justify-content: space-between; transition: 0.2s;
-    }
+	  margin-bottom: 4px;
+	  padding: 5px 8px;
+	  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+	  border: 1px solid rgba(255,255,255,0.2);
+	  font-size: 11px;
+	  font-weight: 700;
+	  letter-spacing: 0.02em;
+	}
+	.booking-tag span {
+	  color: #ffffff !important;
+	}
     .booking-tag:hover { filter: brightness(1.2); transform: translateY(-1px); }
 	.sync-status { 
       font-size: 9px; color: #fff; font-weight: 800; text-transform: uppercase; 
@@ -184,6 +226,7 @@
       const fields = [
         { l: "GUEST NAME", k: "Name" },
         { l: "CHECK-IN", k: "Check-In" },
+		{ l: "CHECK-OUT", k: "Check-Out" },
         { l: "PAX", k: "# of Pax" },
         { l: "TOTAL AMOUNT", k: "Total" },
         { l: "DOWNPAYMENT", k: "DP" },
@@ -212,40 +255,65 @@
     calBody.innerHTML = "";
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    
-    document.getElementById("monthDisplay").innerText = 
-      new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
-
+  
     let date = 1;
+    // Always loop through 6 potential weeks to keep the calendar height stable
     for (let i = 0; i < 6; i++) {
       let row = document.createElement("tr");
-      let rowAdded = false;
+      let hasDateInRow = false;
+  
       for (let j = 0; j < 7; j++) {
         let cell = document.createElement("td");
+        
         if ((i === 0 && j < firstDay) || date > daysInMonth) {
-          cell.innerHTML = "";
+          // Empty cells for days outside the current month
+          cell.innerHTML = ""; 
         } else {
-          rowAdded = true;
-          // Format date as YYYY-MM-DD to match the string comparison
+          hasDateInRow = true;
           const cellDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
           
+          // Filter records for this date (inclusive of check-out)
           const dayBookings = RAW_RECORDS.map((r, index) => ({...r, index}))
             .filter(r => {
-              let checkIn = r["Check-In"] || "";
-              // Handle cases where Check-In might be a full ISO string or just YYYY-MM-DD
-              return checkIn.split('T')[0] === cellDateStr;
+              const checkIn = r["Check-In"] ? r["Check-In"].split('T')[0] : "";
+              const checkOut = r["Check-Out"] ? r["Check-Out"].split('T')[0] : checkIn;
+              return cellDateStr >= checkIn && cellDateStr <= checkOut;
             });
           
-          cell.innerHTML = `<div class="day-num">${date}</div>` + dayBookings.map(b => `
-            <div class="booking-tag tag-${(b["Unit"] || "").split(' ')[0]}" onclick="showDetails(${b.index})">
-              <span>${b["Unit"] || '??'}</span><span>${b["# of Pax"] || '0'} PAX</span>
-            </div>`).join('');
+		  cell.innerHTML = `<div class="day-num">${date}</div>` + 
+		    dayBookings.map(b => {
+		  	const bIn = (b["Check-In"] || "").split('T')[0];
+		  	const bOut = (b["Check-Out"] || "").split('T')[0];
+		  	
+		  	const isCheckInDay = (bIn === cellDateStr);
+		  	const isCheckOutDay = (bOut === cellDateStr);
+		  
+		  	// Determine the label text
+		  	let labelText = ""; 
+		  	if (isCheckInDay && isCheckOutDay) {
+		  	  labelText = "IN/OUT"; // For 1-day stays
+		  	} else if (isCheckInDay) {
+		  	  labelText = "IN";
+		  	} else if (isCheckOutDay) {
+		  	  labelText = "OUT";
+		  	}
+		  
+		  	return `
+		  	  <div class="booking-tag tag-${(b["Unit"] || "").split(' ')[0]}" 
+		  		   onclick="showDetails(${b.index})" 
+		  		   style="margin: 2px 0; color: #ffffff !important; ${isCheckOutDay ? 'filter: brightness(0.9); border-right: 4px solid rgba(0,0,0,0.2);' : ''}">
+		  		<span style="padding-left:8px; color: #ffffff !important;">${b["Unit"]}</span>
+		  		<span style="padding-right:8px; font-size:9px; color: #ffffff !important;">${labelText}</span>
+		  	  </div>`;
+		    }).join('');
           date++;
         }
         row.appendChild(cell);
       }
-      if (rowAdded) calBody.appendChild(row);
-      if (date > daysInMonth) break;
+      // Only append the row if it contains at least one day or we haven't finished the month
+      if (hasDateInRow || date <= daysInMonth) {
+        calBody.appendChild(row);
+      }
     }
   }
   
