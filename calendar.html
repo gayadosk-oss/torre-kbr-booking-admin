@@ -94,15 +94,19 @@
 	.day-num {
 	  font-weight: 700;
 	  font-size: 13px;
-	  padding-left: 8px;
 	  margin-bottom: 4px;
 	  display: block;
-	  color: #64748b;
+	  color: black;
+	  width: 24px;       /* Set a fixed width */
+	  height: 24px;      /* Set a fixed height */
+	  line-height: 24px; /* Center the number vertically */
+	  text-align: center;/* Center the number horizontally */
+	  margin-left: 4px;  /* Small offset from the left border */
 	}
 	/* Highlight today's date number */
 	.today .day-num {
 	  background: var(--accent);
-	  color: white;
+	  color: white !important;
 	  border-radius: 50%;
 	}
 	.booking-tag {
@@ -251,6 +255,8 @@
   }
 
   function renderCalendar() {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    document.getElementById("monthDisplay").innerText = `${monthNames[currentMonth]} ${currentYear}`;
     const calBody = document.getElementById("calendarBody");
     calBody.innerHTML = "";
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -272,6 +278,13 @@
           hasDateInRow = true;
           const cellDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
           
+		  const now = new Date();
+		  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+		  
+		  if (cellDateStr === todayStr) {
+		    cell.classList.add("today");
+		  }
+		  
           // Filter records for this date (inclusive of check-out)
           const dayBookings = RAW_RECORDS.map((r, index) => ({...r, index}))
             .filter(r => {
