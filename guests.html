@@ -89,6 +89,48 @@
 	input[type=number] {
 	  -moz-appearance: textfield;
 	}
+	
+	/* Mobile View: Transform Table into Cards */
+  @media screen and (max-width: 800px) {
+    /* ADD THESE TWO RULES TO REMOVE THE SCROLL */
+    table { 
+      min-width: 100% !important; 
+    }
+    .ledger-wrap { 
+      overflow-x: hidden; 
+      border: none;
+      background: transparent;
+      box-shadow: none;
+    }
+  
+    /* Keep your existing mobile card code below */
+    thead { display: none; }
+    tr {
+      display: block;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 15px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+    }
+    td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: none !important;
+      padding: 8px 0 !important;
+    }
+    td::before {
+      content: attr(data-label);
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      flex: 1;
+      text-align: left;
+    }
+  }
   </style>
 </head>
 <body>
@@ -257,32 +299,34 @@
     if (currentPage > totalPages) currentPage = totalPages;
     const start = (currentPage - 1) * recordsPerPage;
     const pageData = FILTERED_RECORDS.slice(start, start + recordsPerPage);
-
+  
     document.getElementById("ledgerBody").innerHTML = pageData.map((r) => {
       const originalIndex = RAW_RECORDS.findIndex(raw => raw["Booking ID"] === r["Booking ID"]);
+      const hasBalance = parseFloat(r["Balance"] || 0) > 0;
+      
       return `
         <tr onclick="editRecord(${originalIndex})">
-          <td>${formatDateSafe(r["Date"])}</td>
-          <td style="font-weight:bold">${r["Name"] || ""}</td>
-          <td>${r["# of Pax"] || ""}</td>
-          <td>${formatDateSafe(r["Check-In"])}</td>
-		  <td>${formatDateSafe(r["Check-Out"])}</td>
-          <td style="color:var(--accent);font-weight:bold">${r["Unit"] || ""}</td>
-          <td>${r["DP"] || ""}</td>
-          <td class="${parseFloat(r["Balance"] || 0) > 0 ? 'bal' : ''}">${r["Balance"] || ""}</td>
-          <td>${r["Total"] || ""}</td>
-          <td>${r["MOP"] || ""}</td>
-          <td>${r["CP No."] || ""}</td>
-          <td style="color:var(--muted); font-style:italic;">${r["Remarks"] || ""}</td>
+          <td data-label="Date">${formatDateSafe(r["Date"])}</td>
+          <td data-label="Name" style="font-weight:bold">${r["Name"] || ""}</td>
+          <td data-label="Pax">${r["# of Pax"] || ""}</td>
+          <td data-label="Check-In">${formatDateSafe(r["Check-In"])}</td>
+          <td data-label="Check-Out">${formatDateSafe(r["Check-Out"])}</td>
+          <td data-label="Unit" style="color:var(--accent);font-weight:bold">${r["Unit"] || ""}</td>
+          <td data-label="DP">${r["DP"] || ""}</td>
+          <td data-label="Balance" class="${hasBalance ? 'bal' : ''}">${r["Balance"] || ""}</td>
+          <td data-label="Total">${r["Total"] || ""}</td>
+          <td data-label="MOP">${r["MOP"] || ""}</td>
+          <td data-label="Contact">${r["CP No."] || ""}</td>
+          <td data-label="Remarks" style="color:var(--muted); font-style:italic;">${r["Remarks"] || ""}</td>
         </tr>
       `;
-    }).join('') || '<tr><td colspan="11" style="text-align:center;padding:40px">No Records</td></tr>';
-
+    }).join('') || '<tr><td colspan="12" style="text-align:center;padding:40px">No Records</td></tr>';
+  
     document.getElementById("pageInfo").innerText = `Page ${currentPage} / ${totalPages}`;
     document.getElementById("prevBtn").disabled = (currentPage === 1);
     document.getElementById("nextBtn").disabled = (currentPage === totalPages);
   }
-
+  
   function changePage(step) { currentPage += step; renderTable(); window.scrollTo(0,0); }
   function resetPageAndFilter() { currentPage = 1; filterAndSort(); }
 
