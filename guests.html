@@ -123,31 +123,42 @@
 	  justify-content:center;
 	  align-items: center;
 	  z-index: 100;
-	  padding:12px;
+	  padding: 15px;
 	  backdrop-filter: blur(4px);
 	  overflow-y: auto;
+	  overflow: hidden;
 	}
 	
     .modal{
 	  background:#fff;
-	  width:100%;
-	  max-width: 600px;
-	  border-radius:16px; padding:20px;
-	  margin: 20px auto;
+	  width: 95%;
+	  max-width: 550px;
+	  border-radius:16px;
+	  padding:25px;
+	  margin: 0;
 	  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
 	  max-height: 90vh;
 	  overflow-y: auto;
+	  position: relative;
+	  overflow-x: hidden;
 	}
     
 	.formGrid{ 
-		display:grid;
+		display: flex;
+		flex-wrap: wrap;
 		grid-template-columns: 1fr 1fr;
 		gap:10px;
 		width: 100%;
 	}
 	
+	.field { 
+	  /* On desktop, try to take 50% width minus the gap */
+	  flex: 1 1 calc(50% - 15px); 
+	  min-width: 200px; /* If the screen is smaller than 400px, it stacks! */
+	}
+	
     .full{
-	  grid-column: span 2;
+	  grid-column: 1 1 100%;
 	}
 	
     label{
@@ -166,6 +177,8 @@
 	  padding: 10px;
 	  font-size: 16px;
 	  background: #fff;
+	  max-width: 100%;
+	  box-sizing: border-box;
 	}
 
     .actions{
@@ -232,28 +245,6 @@
 	/* Removes arrows from Firefox */
 	input[type=number] {
 	  -moz-appearance: textfield;
-	}
-	
-	/* Mobile Form Fix: Stacks fields vertically to prevent overlapping */
-	@media screen and (max-width: 480px) {
-	  .formGrid {
-		grid-template-columns: 1fr !important; /* Force a single column */
-		gap: 15px;
-	  }
-	  
-	  .field, .full {
-		grid-column: span 1 !important; /* Every field takes full width */
-	  }
-
-	  .modal {
-		padding: 15px;
-		width: 95%; /* Give more room for inputs */
-	  }
-	  
-	  /* Prevent inputs from bleeding out of the container */
-	  .field input, .field select {
-		font-size: 14px; /* Slightly smaller font for better mobile fit */
-	  }
 	}
   </style>
 </head>
