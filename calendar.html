@@ -355,7 +355,7 @@
             .filter(r => {
               const checkIn = r["Check-In"] ? r["Check-In"].split('T')[0] : "";
               const checkOut = r["Check-Out"] ? r["Check-Out"].split('T')[0] : checkIn;
-              return cellDateStr >= checkIn && cellDateStr <= checkOut;
+              return cellDateStr >= checkIn && cellDateStr < checkOut;
             });
           
 		  cell.innerHTML = `<div class="day-num">${date}</div>` + 
