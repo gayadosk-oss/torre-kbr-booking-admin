@@ -160,7 +160,7 @@
 	  border-radius: 20px;
 	  padding: 24px;
 	  max-height: 90vh;
-	  box-shadow:  0 20px 25px -5px rgba(0,0,0,0.2));
+	  box-shadow:  0 20px 25px -5px rgba(0,0,0,0.2);
 	  overflow-y: auto;
 	}
     .modal h2 { margin: 0 0 20px 0; color: var(--accent); font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
@@ -212,6 +212,11 @@
     .booking-tag span:last-child {
       display: none; /* Hide "IN/OUT" labels on mobile to save space */
     }
+	
+	.booking-big-bar:hover {
+	  transform: translateY(-1px);
+	  filter: brightness(1.1);
+	}
   }
   </style>
 </head>
@@ -248,7 +253,7 @@
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzv3aXkkAihx0hiR5tFx3VlabaYpLiAdqaysldk-0RwcyMNTW_1qfbANudn9FkSIllCdQ/exec"; 
+  const API_URL = "https://script.google.com/macros/s/AKfycbwGYX-3VWpoZoSkCfKURMnvBSBSsAfcwG7rKoKA9hGWGwlu1mR1LV-ZOkULvVSTOGFl7w/exec"; 
   const _k = atob("a2JyX3N1cGVyX3NlY3JldF8yMDI2");
   
   let RAW_RECORDS = [];
@@ -290,7 +295,7 @@
       // Debugging: This will show you exactly what keys the HTML is seeing in your browser console
       console.log("Clicked Record:", r); 
   
-      document.getElementById("popUnit").innerText = "Unit " + (r["Unit"] || "??");
+      document.getElementById("popUnit").innerText = "Unit(s) " + (r["Unit"] || "??");
       
       const fields = [
         { l: "GUEST NAME", k: "Name" },
@@ -350,7 +355,7 @@
 		    cell.classList.add("today");
 		  }
 		  
-          // Filter records for this date (inclusive of check-out)
+          // Filter records for this date (exclusive of check-out)
           const dayBookings = RAW_RECORDS.map((r, index) => ({...r, index}))
             .filter(r => {
               const checkIn = r["Check-In"] ? r["Check-In"].split('T')[0] : "";
@@ -358,33 +363,46 @@
               return cellDateStr >= checkIn && cellDateStr < checkOut;
             });
           
-		  cell.innerHTML = `<div class="day-num">${date}</div>` + 
-		    dayBookings.map(b => {
-		  	const bIn = (b["Check-In"] || "").split('T')[0];
-		  	const bOut = (b["Check-Out"] || "").split('T')[0];
-		  	
-		  	const isCheckInDay = (bIn === cellDateStr);
-		  	const isCheckOutDay = (bOut === cellDateStr);
+		  // Render the day number
+		  cell.innerHTML = `<div class="day-num">${date}</div>`;
 		  
-		  	// Determine the label text
-		  	let labelText = ""; 
-		  	if (isCheckInDay && isCheckOutDay) {
-		  	  labelText = "IN/OUT"; // For 1-day stays
-		  	} else if (isCheckInDay) {
-		  	  labelText = "IN";
-		  	} else if (isCheckOutDay) {
-		  	  labelText = "OUT";
-		  	}
+		  // Generate booking bars
+		  cell.innerHTML += dayBookings.map(b => {
+		    const bOut = (b["Check-Out"] || "").split('T')[0];
+			const isCheckOutDay = (bOut === cellDateStr);
+			
+			// Logic of splitting multiple units into sub-rows
+			const unitRaw = String(b["Unit"] || "");
+			const unitArray = unitRaw.split(",").map(u => u.trim()).filter(u => u !== "");
+			
+			// Create mini-rows for each unit within the booking
+			const unitRowsHtml = unitArray.map((u, idx) => {
+			  const colorClass = `tag-${u.split(' ')[0]}`;
+              const isFirst = (idx === 0);
+              const isLast = (idx === unitArray.length - 1);
+			  
+			  // Apply rounded corners only to top of first unit and bottom of last unit
+			  const style = `
+                padding: 4px 8px;
+                font-size: 10px;
+                color: #fff !important;
+                border-top-left-radius: ${isFirst ? '6px' : '0'};
+                border-top-right-radius: ${isFirst ? '6px' : '0'};
+                border-bottom-left-radius: ${isLast ? '6px' : '0'};
+                border-bottom-right-radius: ${isLast ? '6px' : '0'};
+                border-bottom: ${isLast ? 'none' : '1px solid rgba(255,255,255,0.1)'};
+              `;
+              return `<div class="${colorClass}" style="${style}">${u}</div>`;
+            }).join('');
 		  
-		  	return `
-		  	  <div class="booking-tag tag-${(b["Unit"] || "").split(' ')[0]}" 
-		  		   onclick="showDetails(${b.index})" 
-		  		   style="margin: 2px 0; color: #ffffff !important; ${isCheckOutDay ? 'filter: brightness(0.9); border-right: 4px solid rgba(0,0,0,0.2);' : ''}">
-		  		<span style="padding-left:8px; color: #ffffff !important;">${b["Unit"]}</span>
-		  		<span style="padding-right:8px; font-size:9px; color: #ffffff !important;">${labelText}</span>
-		  	  </div>`;
-		    }).join('');
-          date++;
+            return `
+              <div class="booking-big-bar"
+                   onclick="showDetails(${b.index})"
+                   style="cursor:pointer; margin: 4px 2px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; ${isCheckOutDay ? 'opacity: 0.7;' : ''}">
+                ${unitRowsHtml}
+              </div>`;
+          }).join('');
+		  date++;
         }
         row.appendChild(cell);
       }
