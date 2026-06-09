@@ -12,7 +12,7 @@
 	  position: sticky; 
 	  top: 0; 
 	  z-index: 50;
-	  min-height: 70px; /* Ensures enough height for the button */
+	  min-height: 70px;
 	  display: flex;
 	  align-items: center;
 	}
@@ -24,24 +24,24 @@
 	  display: flex; 
 	  align-items: center; 
 	  justify-content: space-between;
-	  gap: 20px; /* Keeps the title and button from bumping into each other */
+	  gap: 20px;
 	}
 
 	h1 {
 	  margin: 0; 
 	  font-size: 18px; 
 	  font-weight: 800;
-	  white-space: nowrap; /* Prevents title from wrapping */
+	  white-space: nowrap;
 	}
 
 	.wrap {
-	  max-width: 1400px; /* Increased from 1200px to match Guests page */
+	  max-width: 1400px;
 	  margin: 0 auto; 
 	  padding: 15px;
 	}
 
 	.toolbar {
-	  display: grid; /* Switched to grid for better alignment */
+	  display: grid;
 	  grid-template-columns: auto 1fr auto auto; 
 	  gap: 12px;
 	  align-items: center; 
@@ -59,10 +59,7 @@
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);}
-    header{padding:16px; border-bottom:1px solid var(--border); background:#fff; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50}
     .mainLink{text-decoration:none; background:#0f172a; color:#fff; padding:8px 16px; border-radius:8px; font-weight:600; font-size:13px;display: inline-flex;align-items: center;flex-shrink: 0;}
-    .wrap{max-width:1200px; margin:0 auto; padding:20px}
-    .toolbar{display:flex; gap:10px; align-items:center; background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px; margin-bottom:20px; box-shadow:var(--shadow);}
     #monthDisplay { font-weight: 800; font-size: 18px; flex-grow: 1; text-align: center; }
     .btn-nav { background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; font-weight: bold; }
     .cal-wrap { background:#fff; border-radius:12px; border:1px solid var(--border); overflow: hidden; box-shadow:var(--shadow); }
@@ -74,58 +71,68 @@
 	}
     th { background:#f8fafc; color:var(--accent); padding:12px; border-bottom:2px solid var(--border); font-size: 11px; text-transform:uppercase; letter-spacing: 0.05em; }
 	td {
-	  /* This ensures the box is always at least this tall even if empty */
-	  height: 110px; 
-	  min-height: 110px;
+	  height: 120px; 
+	  min-height: 120px;
 	  vertical-align: top;
-	  padding: 5px 0; 
+	  padding: 5px; 
 	  border: 1px solid #f1f5f9;
 	  position: relative;
-	  overflow: visible; /* Allows stacked bars to be seen */
+	  overflow: visible;
 	}
 	td:hover {
-	  background-color: #f8fafc; /* Slight highlight on hover */
+	  background-color: #f8fafc;
 	}
-	/* Style for days not in the current month */
 	td:empty {
 	  background: #f1f5f9;
-	  background-image: none;
 	}
 	.day-num {
 	  font-weight: 700;
 	  font-size: 13px;
-	  margin-bottom: 4px;
+	  margin-bottom: 6px;
 	  display: block;
 	  color: black;
-	  width: 24px;       /* Set a fixed width */
-	  height: 24px;      /* Set a fixed height */
-	  line-height: 24px; /* Center the number vertically */
-	  text-align: center;/* Center the number horizontally */
-	  margin-left: 4px;  /* Small offset from the left border */
+	  width: 24px;       
+	  height: 24px;      
+	  line-height: 24px; 
+	  text-align: center;
+	  margin-left: 4px;  
 	}
-	/* Highlight today's date number */
 	.today .day-num {
 	  background: var(--accent);
 	  color: white !important;
 	  border-radius: 50%;
 	}
-	.booking-tag {
-	  background: var(--accent);
-	  color: white;
-	  border-radius: 6px;
-	  margin-bottom: 4px;
-	  padding: 5px 8px;
-	  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-	  border: 1px solid rgba(255,255,255,0.2);
+
+	/* NEW DAILY TEXT LIST STYLE (Replacing old Booking Bars) */
+	.booking-item {
 	  font-size: 11px;
 	  font-weight: 700;
-	  letter-spacing: 0.02em;
+	  padding: 4px 6px;
+	  margin: 3px 0;
+	  border-radius: 6px;
+	  color: white;
+	  cursor: pointer;
+	  display: block;
+	  transition: transform 0.1s, filter 0.1s;
+	  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+	  white-space: nowrap;
+	  overflow: hidden;
+	  text-overflow: ellipsis;
 	}
-	.booking-tag span {
-	  color: #ffffff !important;
+	.booking-item:hover {
+	  filter: brightness(1.15);
+	  transform: translateY(-1px);
 	}
-    .booking-tag:hover { filter: brightness(1.2); transform: translateY(-1px); }
-	.sync-status { 
+	
+	/* Color Coding by Unit Groupings */
+	.tag-D1, .tag-D2 { background: #7c3aed !important; } /* Purple */
+	.tag-C1, .tag-C2, .tag-C3 { background: #059669 !important; } /* Green */
+	.tag-B1, .tag-B2 { background: #ea580c !important; } /* Orange */
+	.tag-A1, .tag-A2 { background: #db2777 !important; } /* Pink */
+	.tag-RM { background: #2563eb !important; } /* Blue */
+	.tag-default { background: #64748b !important; } /* Fallback Gray */
+	
+    .sync-status { 
       font-size: 9px; color: #fff; font-weight: 800; text-transform: uppercase; 
       background: var(--muted); padding: 6px 10px; border-radius: 6px; 
       text-align: center; line-height: 1.1; min-width: 90px; white-space: nowrap;
@@ -133,13 +140,6 @@
     .status-ok { background: var(--success) !important; }
     .status-loading { background: var(--accent) !important; animation: pulse 1s infinite; }
     
-	/* Color Coding by Unit */
-	.tag-D1, .tag-D2 { background: #7c3aed !important; } /* Purple */
-	.tag-C1, .tag-C2, .tag-C3 { background: #059669 !important; } /* Green */
-	.tag-B1, .tag-B2 { background: #ea580c !important; } /* Orange */
-	.tag-A1, .tag-A2 { background: #db2777 !important; } /* Pink */
-	.tag-RM { background: #2563eb !important; } /* Blue */
-	
     /* MODAL STYLES */
     .modal-overlay {
 	  position:fixed;
@@ -152,7 +152,6 @@
 	  backdrop-filter: blur(4px);
 	  padding:20px;
 	}
-	
     .modal {
 	  background:#fff;
 	  width:100%;
@@ -171,52 +170,13 @@
   
   /* Mobile Optimizations */
   @media screen and (max-width: 600px) {
-    .wrap {
-      padding: 10px; /* Reduce outer spacing */
-    }
-  
-    .toolbar {
-      gap: 5px;
-      padding: 5px;
-    }
-  
-    #monthDisplay {
-      font-size: 14px; /* Smaller month title */
-    }
-  
-    th {
-      padding: 5px 2px;
-      font-size: 9px; /* Shorter day names (SUN, MON) */
-    }
-  
-    td {
-      height: 80px; /* Shorter cells for mobile */
-      min-height: 80px;
-    }
-  
-    .day-num {
-      font-size: 11px;
-      width: 20px;
-      height: 20px;
-      line-height: 20px;
-      margin-left: 2px;
-    }
-  
-    .booking-tag {
-      padding: 3px 4px;
-      font-size: 8px; /* Very small font for Unit names */
-      min-height: 18px;
-      margin: 1px 0;
-    }
-    
-    .booking-tag span:last-child {
-      display: none; /* Hide "IN/OUT" labels on mobile to save space */
-    }
-	
-	.booking-big-bar:hover {
-	  transform: translateY(-1px);
-	  filter: brightness(1.1);
-	}
+    .wrap { padding: 10px; }
+    .toolbar { gap: 5px; padding: 5px; }
+    #monthDisplay { font-size: 14px; }
+    th { padding: 5px 2px; font-size: 9px; }
+    td { height: 90px; min-height: 90px; padding: 2px; }
+    .day-num { font-size: 11px; width: 18px; height: 18px; line-height: 18px; margin-left: 2px; margin-bottom: 2px; }
+    .booking-item { padding: 2px 4px; font-size: 8px; margin: 1px 0; border-radius: 4px; }
   }
   </style>
 </head>
@@ -271,10 +231,9 @@
       
       if(res.ok) { 
         RAW_RECORDS = res.records;
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); //current time
-
         renderCalendar();
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         statusEl.className = "sync-status status-ok";
         statusEl.innerHTML = `Synced<br>${timeStr}`;
       } else {
@@ -283,7 +242,7 @@
         statusEl.style.background = "var(--danger)";
       }
     } catch(e) { 
-        console.error("Sync Error:", e); //view error in console (F12)
+        console.error("Sync Error:", e);
         statusEl.innerText = "Error";
         statusEl.className = "sync-status";
         statusEl.style.background = "var(--danger)";
@@ -292,9 +251,6 @@
 
   function showDetails(idx) {
       const r = RAW_RECORDS[idx];
-      // Debugging: This will show you exactly what keys the HTML is seeing in your browser console
-      console.log("Clicked Record:", r); 
-  
       document.getElementById("popUnit").innerText = "Unit(s) " + (r["Unit"] || "??");
       
       const fields = [
@@ -311,7 +267,6 @@
       ];
   
       document.getElementById("popContent").innerHTML = fields.map(f => {
-        // We use the exact key 'k', and if it's missing, we show "--"
         const value = r[f.k];
         return `
           <div class="detail-row">
@@ -331,9 +286,11 @@
     calBody.innerHTML = "";
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Custom order mapping for the sorted display
+    const unitOrder = ["D1", "D2", "C1", "C2", "C3", "B1", "B2", "A1", "A2", "Rm A", "Rm B", "Rm C"];
   
     let date = 1;
-    // Always loop through 6 potential weeks to keep the calendar height stable
     for (let i = 0; i < 6; i++) {
       let row = document.createElement("tr");
       let hasDateInRow = false;
@@ -342,7 +299,6 @@
         let cell = document.createElement("td");
         
         if ((i === 0 && j < firstDay) || date > daysInMonth) {
-          // Empty cells for days outside the current month
           cell.innerHTML = ""; 
         } else {
           hasDateInRow = true;
@@ -355,7 +311,7 @@
 		    cell.classList.add("today");
 		  }
 		  
-          // Filter records for this date (exclusive of check-out)
+          // Filter records where the date falls strictly within Check-In and before Check-Out
           const dayBookings = RAW_RECORDS.map((r, index) => ({...r, index}))
             .filter(r => {
               const checkIn = r["Check-In"] ? r["Check-In"].split('T')[0] : "";
@@ -363,50 +319,67 @@
               return cellDateStr >= checkIn && cellDateStr < checkOut;
             });
           
-		  // Render the day number
-		  cell.innerHTML = `<div class="day-num">${date}</div>`;
+		  // Start with the day number container
+		  let cellHtml = `<div class="day-num">${date}</div>`;
 		  
-		  // Generate booking bars
-		  cell.innerHTML += dayBookings.map(b => {
-		    const bOut = (b["Check-Out"] || "").split('T')[0];
-			const isCheckOutDay = (bOut === cellDateStr);
-			
-			// Logic of splitting multiple units into sub-rows
+		  // Collect all individual units available for this day first
+		  let flatDayUnits = [];
+		  
+		  dayBookings.forEach(b => {
 			const unitRaw = String(b["Unit"] || "");
 			const unitArray = unitRaw.split(",").map(u => u.trim()).filter(u => u !== "");
+			const pax = b["# of Pax"] || "0";
 			
-			// Create mini-rows for each unit within the booking
-			const unitRowsHtml = unitArray.map((u, idx) => {
-			  const colorClass = `tag-${u.split(' ')[0]}`;
-              const isFirst = (idx === 0);
-              const isLast = (idx === unitArray.length - 1);
-			  
-			  // Apply rounded corners only to top of first unit and bottom of last unit
-			  const style = `
-                padding: 4px 8px;
-                font-size: 10px;
-                color: #fff !important;
-                border-top-left-radius: ${isFirst ? '6px' : '0'};
-                border-top-right-radius: ${isFirst ? '6px' : '0'};
-                border-bottom-left-radius: ${isLast ? '6px' : '0'};
-                border-bottom-right-radius: ${isLast ? '6px' : '0'};
-                border-bottom: ${isLast ? 'none' : '1px solid rgba(255,255,255,0.1)'};
-              `;
-              return `<div class="${colorClass}" style="${style}">${u}</div>`;
-            }).join('');
+			unitArray.forEach(u => {
+			  flatDayUnits.push({
+			    fullString: u,
+			    pax: pax,
+			    index: b.index
+			  });
+			});
+          });
+
+		  // Sort collected units based on your predefined order array
+		  flatDayUnits.sort((a, b) => {
+		    // Match prefix up to the first space or end of string (handles "A1" vs "A1 (Extra)" cleanly)
+		    const matchA = a.fullString.split(' ')[0];
+		    const matchB = b.fullString.split(' ')[0];
+		    
+		    // Fallback if item isn't in your order list (places unrecognized units at the bottom)
+		    let orderA = unitOrder.indexOf(matchA);
+		    let orderB = unitOrder.indexOf(matchB);
+		    
+		    if (orderA === -1) orderA = 999;
+		    if (orderB === -1) orderB = 999;
+		    
+		    return orderA - orderB;
+		  });
 		  
-            return `
-              <div class="booking-big-bar"
-                   onclick="showDetails(${b.index})"
-                   style="cursor:pointer; margin: 4px 2px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; ${isCheckOutDay ? 'opacity: 0.7;' : ''}">
-                ${unitRowsHtml}
-              </div>`;
-          }).join('');
+		  // Render sorted components to HTML
+		  flatDayUnits.forEach(item => {
+		    const baseUnitCode = item.fullString.split(' ')[0];
+		    
+		    // Standardize CSS class match for Rm variants
+		    let cleanClassCode = baseUnitCode;
+		    if (baseUnitCode.toLowerCase().startsWith("rm")) {
+		      cleanClassCode = "RM";
+		    }
+		    
+		    const colorClass = `tag-${cleanClassCode}`;
+		    
+		    cellHtml += `
+			  <div class="booking-item ${colorClass}" 
+			       onclick="showDetails(${item.index})" 
+			       title="${item.fullString} - ${item.pax} Pax">
+			    ${item.fullString} - ${item.pax} Pax
+			  </div>`;
+		  });
+		  
+		  cell.innerHTML = cellHtml;
 		  date++;
         }
         row.appendChild(cell);
       }
-      // Only append the row if it contains at least one day or we haven't finished the month
       if (hasDateInRow || date <= daysInMonth) {
         calBody.appendChild(row);
       }
